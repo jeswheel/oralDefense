@@ -1,0 +1,13 @@
+.Rproj.user
+.Rhistory
+.RData
+.Ruserdata
+*.log
+*.nav
+*.bbl
+*.vrb
+*.toc
+*.synctex.gz
+*concordance.tex
+*.snm
+_minted/

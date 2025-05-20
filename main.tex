@@ -1,0 +1,132 @@
+% !TeX program = LuaLaTeX
+\documentclass[aspectratio=169, 10pt]{beamer}\usepackage[]{graphicx}\usepackage[]{xcolor}
+% maxwidth is the original width if it is less than linewidth
+% otherwise use linewidth (to make sure the graphics do not exceed the margin)
+\makeatletter
+\def\maxwidth{ %
+  \ifdim\Gin@nat@width>\linewidth
+    \linewidth
+  \else
+    \Gin@nat@width
+  \fi
+}
+\makeatother
+
+\definecolor{fgcolor}{rgb}{0.345, 0.345, 0.345}
+\newcommand{\hlnum}[1]{\textcolor[rgb]{0.686,0.059,0.569}{#1}}%
+\newcommand{\hlsng}[1]{\textcolor[rgb]{0.192,0.494,0.8}{#1}}%
+\newcommand{\hlcom}[1]{\textcolor[rgb]{0.678,0.584,0.686}{\textit{#1}}}%
+\newcommand{\hlopt}[1]{\textcolor[rgb]{0,0,0}{#1}}%
+\newcommand{\hldef}[1]{\textcolor[rgb]{0.345,0.345,0.345}{#1}}%
+\newcommand{\hlkwa}[1]{\textcolor[rgb]{0.161,0.373,0.58}{\textbf{#1}}}%
+\newcommand{\hlkwb}[1]{\textcolor[rgb]{0.69,0.353,0.396}{#1}}%
+\newcommand{\hlkwc}[1]{\textcolor[rgb]{0.333,0.667,0.333}{#1}}%
+\newcommand{\hlkwd}[1]{\textcolor[rgb]{0.737,0.353,0.396}{\textbf{#1}}}%
+\let\hlipl\hlkwb
+
+\usepackage{framed}
+\makeatletter
+\newenvironment{kframe}{%
+ \def\at@end@of@kframe{}%
+ \ifinner\ifhmode%
+  \def\at@end@of@kframe{\end{minipage}}%
+  \begin{minipage}{\columnwidth}%
+ \fi\fi%
+ \def\FrameCommand##1{\hskip\@totalleftmargin \hskip-\fboxsep
+ \colorbox{shadecolor}{##1}\hskip-\fboxsep
+     % There is no \\@totalrightmargin, so:
+     \hskip-\linewidth \hskip-\@totalleftmargin \hskip\columnwidth}%
+ \MakeFramed {\advance\hsize-\width
+   \@totalleftmargin\z@ \linewidth\hsize
+   \@setminipage}}%
+ {\par\unskip\endMakeFramed%
+ \at@end@of@kframe}
+\makeatother
+
+\definecolor{shadecolor}{rgb}{.97, .97, .97}
+\definecolor{messagecolor}{rgb}{0, 0, 0}
+\definecolor{warningcolor}{rgb}{1, 0, 1}
+\definecolor{errorcolor}{rgb}{1, 0, 0}
+\newenvironment{knitrout}{}{} % an empty environment to be redefined in TeX
+
+\usepackage{alltt}
+\usetheme{gotham}
+
+	\gothamset{
+		numbering=totalframenumber,
+		% tocframe template= gotham simple,
+		tocframe template= gotham bullet,
+		% progressbar position=circlehead,
+		progressbar position=foot,
+		progressbar style=rectangle,
+		progressbar mfn=on,
+		parttocframe default=off,
+		sectiontocframe default=off,
+		subsectiontocframe default=off,
+	}
+
+	\usepackage{standalone}
+	\usepackage{tikz}
+	\usepackage{pgfplots}
+	\usepackage{tabularray} % Typeset tabulars and arrays (contains equivalent of longtable, booktabs and dcolumn at least) 
+		\UseTblrLibrary{booktabs} % to load extra commands from booktabs
+	\usepackage{changepage}
+	\usepackage{appendixnumberbeamer}
+		\newcommand{\famName}[1]{\textsc{#1}}
+	\usepackage{minted}
+		\definecolor{codeback}{rgb}{0.90,0.91,0.92}
+		\definecolor{codebackdark}{rgb}{0.10,0.11,0.12}
+		\usemintedstyle{emacs}
+		\setmintedinline[tex]{bgcolor=codeback}
+		\setminted[tex]{
+			autogobble,
+			bgcolor=codeback,
+			tabsize=4,
+			extrakeywords={usetheme,institute,maketitle,subtitle,gothamset,colorlet,setbeamercolor,plain,defbeamertemplate}
+		}
+
+	\usepackage[scale=2]{ccicons}
+	% \usepackage{pgfplots}
+		\usepgfplotslibrary{dateplot}
+
+	\newcommand{\themename}{\textbf{\textsc{Gotham}}}
+
+
+\title[]{Innovations in Likelihood-Based Inference for State Space Models}
+\subtitle{Oral Defense}
+\date[]{\today}
+\author[Wheeler]{Jesse Wheeler}
+\institute{Department of Statistics, University of Michigan}
+\titlegraphic{\hfill\includegraphics[height=1.5cm]{gotham-logo.pdf}}
+\IfFileExists{upquote.sty}{\usepackage{upquote}}{}
+\begin{document}
+
+\maketitle
+
+	\begin{frame}[toc]{Table of contents}%
+		\tableofcontents%[hideallsubsections]
+	\end{frame}
+
+	
+%%%%%%%%%%%%%%%%%%%%
+%%%  MAINMATTER  %%%
+%%%%%%%%%%%%%%%%%%%%
+% \input{section-Beamer.tex}
+
+% \input{section-Gotham.tex}
+
+\input{section-Conclusion.tex}
+
+
+\appendix
+
+	\begin{frame}[fragile]{Backup slides}
+		Sometimes, it is useful to add slides at the end of your presentation to refer to during audience questions.
+
+		The best way to do this is to include \verb|\usepackage{appendixnumberbeamer}| in your preamble and call \verb|\appendix| before your backup slides.
+
+		\themename{} will automatically turn off slide numbering and progress bars for slides in the appendix.
+	\end{frame}
+
+
+\end{document}

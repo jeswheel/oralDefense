@@ -1,0 +1,27 @@
+\documentclass[aspectratio=169]{beamer}
+\usetheme{gotham}
+
+	\usepackage{standalone}
+	\usepackage{tikz}
+	\usepackage{pgfplots}
+	\usepackage{tabularray} % Typeset tabulars and arrays (contains equivalent of longtable, booktabs and dcolumn at least)
+		\UseTblrLibrary{booktabs} % to load extra commands from booktabs
+	\usepackage{changepage}
+	\usepackage{minted}
+		\definecolor{codeback}{rgb}{0.90,0.91,0.92}
+		\definecolor{codebackdark}{rgb}{0.10,0.11,0.12}
+
+	\newcommand{\famName}[1]{\textsc{#1}}
+	\newcommand{\themename}{\textbf{\textsc{Gotham}}}
+
+
+\begin{document}
+
+\section{The Marginalized Panel Iterated Filter (MPIF)}
+
+\begin{frame}
+Test
+\end{frame}
+
+\end{document}
+%EoF

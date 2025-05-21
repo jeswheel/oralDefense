@@ -1,0 +1,46 @@
+\documentclass[aspectratio=169]{beamer}
+\usetheme{gotham}
+
+	\usepackage{standalone}
+	\usepackage{tikz}
+	\usepackage{pgfplots}
+	\usepackage{tabularray} % Typeset tabulars and arrays (contains equivalent of longtable, booktabs and dcolumn at least)
+		\UseTblrLibrary{booktabs} % to load extra commands from booktabs
+	\usepackage{changepage}
+	\usepackage{minted}
+		\definecolor{codeback}{rgb}{0.90,0.91,0.92}
+		\definecolor{codebackdark}{rgb}{0.10,0.11,0.12}
+
+	\newcommand{\famName}[1]{\textsc{#1}}
+	\newcommand{\themename}{\textbf{\textsc{Gotham}}}
+
+
+\begin{document}
+
+\section{Introduction}
+
+\begin{frame}{Synonyms and Definitions}
+
+There are several terms that have been used as synonyms with state space models (SSMs):
+
+\begin{itemize}
+  \item Mechanistic model
+  \item Hidden Markov model (HMM)
+  \item Partially observed Markov process (POMP) model
+\end{itemize}
+
+I chose SSM as it is the terminology often preferred by practitioners.
+\end{frame}
+
+\begin{frame}{State Space Models}
+  I Follow the definition used by \citet{durbin12} for a SSM.
+  
+  \begin{itemize}
+  \item Let $\bm{Y}_{1}, \ldots, \bm{Y}_{N}$ be random variable representing the observed time series. 
+  \item A SSM introduces unobservable states $\bm{X}_1, \ldots, \bm{X}_N$. 
+  \end{itemize}
+  
+\end{frame}
+
+\end{document}
+%EoF

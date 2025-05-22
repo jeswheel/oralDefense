@@ -5,6 +5,7 @@ TEXFILES = $(wildcard */*.tex)
 
 # Directories containing Rnw files
 CHAPTER_DIRS = introduction conclusion arima2 haiti mpif
+INPUT_FILES = header.tex
 
 # Create lists of .Rnw and corresponding .tex files
 RNW_FILES := $(wildcard $(foreach dir,$(CHAPTER_DIRS),$(dir)/*.Rnw))
@@ -16,7 +17,7 @@ AUX_EXTENSIONS = log lof fls aux bbl blg fdb_latexmk lop out toc nav snm vrb gz
 all: main.pdf
 
 # Build the main PDF
-main.pdf: main.tex $(TEX_FILES)
+main.pdf: main.tex $(TEX_FILES) $(INPUT_FILES)
 	$(LUALATEX) main.tex
 	$(BIBTEX) main
 	$(LUALATEX) main.tex
@@ -32,7 +33,7 @@ main.pdf: main.tex $(TEX_FILES)
 # 	$(call KNITR,$<,$@)
 
 # Rule to build PDF from main.tex, including all dependencies
-$(PDF_OUTPUT): $(MAIN_TEX) $(TEX_FILES)
+$(PDF_OUTPUT): $(MAIN_TEX) $(TEX_FILES) $(INPUT_FILES)
 	latexmk -pdf $(MAIN_TEX)
 
 # Clean up auxiliary files

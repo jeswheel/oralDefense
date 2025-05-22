@@ -1,6 +1,10 @@
 \documentclass[aspectratio=169]{beamer}
 \usetheme{gotham}
 
+% \setbeamercolor{block~title}{
+%   
+% }
+
 	\usepackage{standalone}
 	\usepackage{tikz}
 	\usepackage{pgfplots}
@@ -32,14 +36,143 @@ There are several terms that have been used as synonyms with state space models 
 I chose SSM as it is the terminology often preferred by practitioners.
 \end{frame}
 
-\begin{frame}{State Space Models}
+\begin{frame}{State Space Models (SSM)}
   I Follow the definition used by \citet{durbin12} for a SSM.
   
   \begin{itemize}
-  \item Let $\bm{Y}_{1}, \ldots, \bm{Y}_{N}$ be random variable representing the observed time series. 
-  \item A SSM introduces unobservable states $\bm{X}_1, \ldots, \bm{X}_N$. 
+  \item Let $\bm{Y}_{1}, \bm{Y}_2, \ldots, \bm{Y}_{N}$ be random variable representing the observed time series. These observations occur at time points $t_1, \ldots, t_N$, and can be vector valued. 
+  \item A SSM introduces unobservable (latent) states $\bm{X}_1, \ldots, \bm{X}_N$ at the same observation times. These latent variables are connected to the observations, in a way defined by the model.
   \end{itemize}
   
+  I will adopt the shorthand $t_{\seq{1}{N}} = (t_1, \ldots, t_N)$, $\bm{Y}_{\seq{1}{N}} = (\bm{Y}_{1}, \ldots, \bm{Y}_{N})$, and $\bm{X}_{\seq{1}{N}} = (\bm{X}_1, \ldots, \bm{X}_N)$.
+  
+  When defining a SSM, we often want to include an initial value for the latent states, $\bm{X}_0$.
+
+\end{frame}
+
+\begin{frame}{Likelihood function}
+
+  We assume that the random variables $\bm{Y}_{\seq{1}{N}}$, $\bm{X}_{\seq{0}{N}}$ have a joint probability density $f_{\bm{X}_{\seq{0}{N}}, \bm{Y}_{\seq{1}{N}}}(\bm{x}_{\seq{0}{N}}, \bm{y}_{\seq{1}{N}}; \, \paramVec)$ with respect to some dominating measure (typically Lebesgue or a counting measure), where $\paramVec$ is a parameter vector $\paramVec \in \R^{d_\paramVec}$ that indexes the model.
+  
+  The difficulty in likelihood-based inference for these models is a result of only $\bm{Y}_{\seq{1}{N}}$ being observable, and thus the likelihood function involves a high-dimensional integral: 
+  
+\begin{eqnarray}
+  \label{eq:likedef}
+  \mathcal{L}(\paramVec) = f_{\bm{Y}_{1:N}}\big(\bm{y}_{1:N}^*; \, \paramVec\big) = \int f_{\bm{X}_{\seq{0}{N}}, \bm{Y}_{\seq{1}{N}}}\big(\bm{x}_{\seq{0}{N}}, \bm{y}_{\seq{1}{N}}^*;\, \paramVec\big) \, d\bm{x}_{\seq{0}{N}}.
+\end{eqnarray}
+
+\end{frame}
+
+\begin{frame}{POMP models}
+
+A common approach is to treat SSMs as partially observed Markov process (POMP) models. We make the following assumptions: 
+\begin{itemize}
+  \item We assume that the latent variables are a Markov process
+  $$
+  f_{\bm{X}_{n} | \bm{X}_{1:n-1}}(\bm{x}_{n} | \bm{x}_{1:n-1}; \, \paramVec) = f_{\bm{X}_{n} | \bm{X}_{n-1}}(\bm{x}_{n} | \bm{x}_{n-1}; \, \paramVec).
+  $$
+  \item Measurements are conditionally independent
+  $$
+  f_{\bm{Y}_{n} | \bm{X}_{1:N}, \bm{Y}_{-n}}(\bm{y}_{n} | \bm{x}_{0:N}, \bm{y}_{-n}; \, \paramVec) = f_{\bm{Y}_{n} | \bm{X}_{n}}(\bm{y}_{n} | \bm{x}_{n}; \, \paramVec).
+  $$
+\end{itemize}
+With these assumptions, we can express the joint density as
+\begin{eqnarray}
+\label{eq:jointLik}
+f_{\bm{X}_{0:N}, \bm{Y}_{1:N}}\big(\bm{x}_{0:N}, \bm{y}_{1:N};\, \paramVec\big) = f_{\bm{X}_0}\big(\bm{x}_0;\, \paramVec\big)\prod_{n = 1}^N f_{\bm{X}_n|\bm{X}_{n-1}}\big(\bm{x}_{n}|\bm{x}_{n-1}; \, \paramVec\big)f_{\bm{Y}_n|\bm{X}_{n}}\big(\bm{y}_n|\bm{x}_{n}; \, \paramVec\big).
+\end{eqnarray}
+
+\end{frame}
+
+\begin{frame}
+\begin{figure}[!ht]
+<<pompDiagram, echo=FALSE, fig.height=3, fig.width=6, out.width='0.75\\maxwidth'>>=
+library(grid)
+library(latex2exp)
+vp <- viewport(x=unit(0.5,"npc"),y=unit(0.54,"npc"),
+               width=unit(0.96,"npc"),height=unit(0.96,"npc"))
+pushViewport(vp)
+
+X_offset <- 0.04
+
+fs <- 12
+x1 <- 0.5+X_offset; y1 <- 0.88; offset <- 0.225;
+gp <- gpar(lty=2,col=grey(0.6),fontsize=12)
+grid.text(x=x1,y=y1,label="measurement model",just="centre",gp=gpar(lty=2,col=grey(0.6),fontsize=11))
+grid.text(x=x1+offset,y=y1-0.005,TeX("$f_{Y_n|X_n}(y_n|x_n;\\,\\theta)$", italic = TRUE),gp=gpar(fontsize=11,col=grey(0.5)))
+x1 <- (2* x1 + offset/2)/2+X_offset
+grid.lines(x=unit(c(x1,7/24+X_offset),"npc")+unit(c(0,2),"points"),y=unit(c(y1,1/2),"npc")+unit(c(-fs/2,0),"points"),gp=gp)
+grid.lines(x=unit(c(x1,11.8/24+X_offset),"npc")+unit(c(0,2),"points"),y=unit(c(y1,1/2),"npc")+unit(c(-fs/2,0),"points"),gp=gp)
+grid.lines(x=unit(c(x1,18/24+X_offset),"npc")+unit(c(0,-2),"points"),y=unit(c(y1,1/2),"npc")+unit(c(-fs/2,0),"points"),gp=gp)
+
+x1 <- 0.25+X_offset; y1 <- 0.14; offset <- 0.2075
+grid.text(x=x1,y=y1,label="process model",just="centre",gp=gpar(lty=2,col=grey(0.6),fontsize=11))
+grid.text(x=x1+offset,y=y1-0.005,TeX("$f_{X_n|X_{n-1}}(x_n|x_{n-1};\\,\\theta)$", italic = TRUE),gp=gpar(fontsize=11,col=grey(0.5)))
+x1 <- (2 * x1 + offset) / 2
+grid.lines(x=unit(c(x1,4/24+X_offset),"npc"),y=unit(c(y1,1/3),"npc")+unit(c((fs+1)/2,-fs/4),"points"),gp=gp)
+grid.lines(x=unit(c(x1,9.5/24+X_offset),"npc"),y=unit(c(y1,1/3),"npc")+unit(c((fs+1)/2,-fs/4),"points"),gp=gp)
+grid.lines(x=unit(c(x1,13.5/24+X_offset),"npc"),y=unit(c(y1,1/3),"npc")+unit(c((fs+1)/2,-fs/4),"points"),gp=gp)
+grid.lines(x=unit(c(x1,19.6/24+X_offset),"npc"),y=unit(c(y1,1/3),"npc")+unit(c(fs/2,-fs/4),"points"),gp=gp)
+grid.lines(x=unit(c(x1,16/24+X_offset),"npc"),y=unit(c(y1,1/3),"npc")+unit(c((fs+1)/2,-fs/4),"points"),gp=gp)
+
+grid.text(x=1/72,y=c(1/3,2/3),label=c("latent states","observations"),just="centre",rot=90,gp=gpar(lty=2,col=grey(0.6),fontsize=11))
+
+x1 <- unit(c(2, 7, 12, 18, 7, 12, 18)/24+X_offset, "npc")
+y1 <- unit(c(rep(1,4),rep(2,3))/3,"npc")
+w <- unit(1/12,"npc")
+h <- unit(1/6,"npc")
+
+grid.lines(x=c(1/48,47/48+X_offset/2),y=1/12,arrow=arrow(length=unit(0.02,"npc")))
+grid.text(x=x1[1:4],y=1/24,label=c(expression(italic(t[0])),expression(italic(t[1])),expression(italic(t[2])),expression(t[n])))
+
+grid.text(x=unit(15/24+X_offset, 'npc'), y=1/24,label=quote(phantom(0)~cdots~phantom(0)))
+grid.text(x=unit(21/24+X_offset, 'npc'), y=1/24,label=quote(phantom(0)~cdots~phantom(0)))
+
+grid.rect(x=x1,y=y1,width=w,height=h,just=c(0.5,0.5),gp=gpar(fill="white",lwd=2))
+grid.text(x=x1,y=y1,label=c(
+  expression(italic(X[0])),expression(italic(X[1])),
+  expression(italic(X[2])),expression(italic(X[n])),
+  expression(italic(Y[1])),
+  expression(italic(Y[2])),expression(italic(Y[n]))),
+  gp=gpar(fontface=3))
+grid.text(x=c(15, 21)/24+X_offset,y=unit(1/3-(1/250),"npc")+unit(2,"point"),label=quote(phantom(0)~cdots~phantom(0)),gp=gpar(fontsize=15))
+grid.lines(x=c(2,7)/24+c(1.2,-1.2)/24+X_offset,y=1/3,arrow=arrow(length=unit(0.02,"npc")),gp=gpar(lwd=2))
+grid.lines(x=c(7,12)/24+c(1.2,-1.2)/24+X_offset,y=1/3,arrow=arrow(length=unit(0.02,"npc")),gp=gpar(lwd=2))
+grid.lines(x=c(12,15)/24+c(1.2,-0.7)/24+X_offset,y=1/3,arrow=arrow(length=unit(0.02,"npc")),gp=gpar(lwd=2))
+grid.lines(x=c(15,18)/24+c(0.7,-1.2)/24+X_offset,y=1/3,arrow=arrow(length=unit(0.02,"npc")),gp=gpar(lwd=2))
+grid.lines(x=c(18,21)/24+c(1.2,-0.6)/24+X_offset,y=1/3,arrow=arrow(length=unit(0.02,"npc")),gp=gpar(lwd=2))
+
+grid.lines(x=7/24+X_offset,y=c(1,2)/3+c(1,-1)/12,arrow=arrow(length=unit(0.02,"npc")),gp=gpar(lwd=2))
+grid.lines(x=12/24+X_offset,y=c(1,2)/3+c(1,-1)/12,arrow=arrow(length=unit(0.02,"npc")),gp=gpar(lwd=2))
+grid.lines(x=18/24+X_offset,y=c(1,2)/3+c(1,-1)/12,arrow=arrow(length=unit(0.02,"npc")),gp=gpar(lwd=2))
+
+popViewport()
+@
+\caption{\label{fig:pompDiagram}A flow diagram representing an arbitrary POMP model. Modified figure from SBIED course (King, Ionides).}
+\end{figure}
+
+\alert{Each of the SSMs considered in this thesis are POMP models.}
+
+\end{frame}
+
+\begin{frame}{Other synonyms and definitions}
+  Other common terms that are sometimes used as synonyms are used for special cases 
+  \begin{block}{Mechanistic Model}
+    A SSM (or POMP) where the evolution of latent variables is dictated by equations mimicing real-world mechanisms. 
+  \end{block}
+  
+  \begin{block}{Hidden Markov Model (HMM)}
+    A SSM (or POMP) where the latent variables take values in a discrete and finite space.
+  \end{block}
+  
+\end{frame}
+
+\begin{frame}{Remaining Chapters and Outline}
+  \begin{itemize}
+    \item Inference for ARMA models.
+    \item Mechanistic models for modeling cholera outbreak in Haiti.
+    \item The marginalized panel iterated filter (MPIF) algorithm.
+  \end{itemize}
 \end{frame}
 
 \end{document}

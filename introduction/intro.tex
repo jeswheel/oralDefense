@@ -51,6 +51,10 @@
 \usepackage{alltt}
 \usetheme{gotham}
 
+% \setbeamercolor{block~title}{
+%   
+% }
+
 	\usepackage{standalone}
 	\usepackage{tikz}
 	\usepackage{pgfplots}
@@ -81,14 +85,85 @@ There are several terms that have been used as synonyms with state space models 
 I chose SSM as it is the terminology often preferred by practitioners.
 \end{frame}
 
-\begin{frame}{State Space Models}
+\begin{frame}{State Space Models (SSM)}
   I Follow the definition used by \citet{durbin12} for a SSM.
   
   \begin{itemize}
-  \item Let $\bm{Y}_{1}, \ldots, \bm{Y}_{N}$ be random variable representing the observed time series. 
-  \item A SSM introduces unobservable states $\bm{X}_1, \ldots, \bm{X}_N$. 
+  \item Let $\bm{Y}_{1}, \bm{Y}_2, \ldots, \bm{Y}_{N}$ be random variable representing the observed time series. These observations occur at time points $t_1, \ldots, t_N$, and can be vector valued. 
+  \item A SSM introduces unobservable (latent) states $\bm{X}_1, \ldots, \bm{X}_N$ at the same observation times. These latent variables are connected to the observations, in a way defined by the model.
   \end{itemize}
   
+  I will adopt the shorthand $t_{\seq{1}{N}} = (t_1, \ldots, t_N)$, $\bm{Y}_{\seq{1}{N}} = (\bm{Y}_{1}, \ldots, \bm{Y}_{N})$, and $\bm{X}_{\seq{1}{N}} = (\bm{X}_1, \ldots, \bm{X}_N)$.
+  
+  When defining a SSM, we often want to include an initial value for the latent states, $\bm{X}_0$.
+
+\end{frame}
+
+\begin{frame}{Likelihood function}
+
+  We assume that the random variables $\bm{Y}_{\seq{1}{N}}$, $\bm{X}_{\seq{0}{N}}$ have a joint probability density $f_{\bm{X}_{\seq{0}{N}}, \bm{Y}_{\seq{1}{N}}}(\bm{x}_{\seq{0}{N}}, \bm{y}_{\seq{1}{N}}; \, \paramVec)$ with respect to some dominating measure (typically Lebesgue or a counting measure), where $\paramVec$ is a parameter vector $\paramVec \in \R^{d_\paramVec}$ that indexes the model.
+  
+  The difficulty in likelihood-based inference for these models is a result of only $\bm{Y}_{\seq{1}{N}}$ being observable, and thus the likelihood function involves a high-dimensional integral: 
+  
+\begin{eqnarray}
+  \label{eq:likedef}
+  \mathcal{L}(\paramVec) = f_{\bm{Y}_{1:N}}\big(\bm{y}_{1:N}^*; \, \paramVec\big) = \int f_{\bm{X}_{\seq{0}{N}}, \bm{Y}_{\seq{1}{N}}}\big(\bm{x}_{\seq{0}{N}}, \bm{y}_{\seq{1}{N}}^*;\, \paramVec\big) \, d\bm{x}_{\seq{0}{N}}.
+\end{eqnarray}
+
+\end{frame}
+
+\begin{frame}{POMP models}
+
+A common approach is to treat SSMs as partially observed Markov process (POMP) models. We make the following assumptions: 
+\begin{itemize}
+  \item We assume that the latent variables are a Markov process
+  $$
+  f_{\bm{X}_{n} | \bm{X}_{1:n-1}}(\bm{x}_{n} | \bm{x}_{1:n-1}; \, \paramVec) = f_{\bm{X}_{n} | \bm{X}_{n-1}}(\bm{x}_{n} | \bm{x}_{n-1}; \, \paramVec).
+  $$
+  \item Measurements are conditionally independent
+  $$
+  f_{\bm{Y}_{n} | \bm{X}_{1:N}, \bm{Y}_{-n}}(\bm{y}_{n} | \bm{x}_{0:N}, \bm{y}_{-n}; \, \paramVec) = f_{\bm{Y}_{n} | \bm{X}_{n}}(\bm{y}_{n} | \bm{x}_{n}; \, \paramVec).
+  $$
+\end{itemize}
+With these assumptions, we can express the joint density as
+\begin{eqnarray}
+\label{eq:jointLik}
+f_{\bm{X}_{0:N}, \bm{Y}_{1:N}}\big(\bm{x}_{0:N}, \bm{y}_{1:N};\, \paramVec\big) = f_{\bm{X}_0}\big(\bm{x}_0;\, \paramVec\big)\prod_{n = 1}^N f_{\bm{X}_n|\bm{X}_{n-1}}\big(\bm{x}_{n}|\bm{x}_{n-1}; \, \paramVec\big)f_{\bm{Y}_n|\bm{X}_{n}}\big(\bm{y}_n|\bm{x}_{n}; \, \paramVec\big).
+\end{eqnarray}
+
+\end{frame}
+
+\begin{frame}
+\begin{figure}[!ht]
+\begin{knitrout}
+\definecolor{shadecolor}{rgb}{0.969, 0.969, 0.969}\color{fgcolor}
+\includegraphics[width=0.75\maxwidth]{figure/pompDiagram-1} 
+\end{knitrout}
+\caption{\label{fig:pompDiagram}A flow diagram representing an arbitrary POMP model. Modified figure from SBIED course (King, Ionides).}
+\end{figure}
+
+\alert{Each of the SSMs considered in this thesis are POMP models.}
+
+\end{frame}
+
+\begin{frame}{Other synonyms and definitions}
+  Other common terms that are sometimes used as synonyms are used for special cases 
+  \begin{block}{Mechanistic Model}
+    A SSM (or POMP) where the evolution of latent variables is dictated by equations mimicing real-world mechanisms. 
+  \end{block}
+  
+  \begin{block}{Hidden Markov Model (HMM)}
+    A SSM (or POMP) where the latent variables take values in a discrete and finite space.
+  \end{block}
+  
+\end{frame}
+
+\begin{frame}{Remaining Chapters and Outline}
+  \begin{itemize}
+    \item Inference for ARMA models.
+    \item Mechanistic models for modeling cholera outbreak in Haiti.
+    \item The marginalized panel iterated filter (MPIF) algorithm.
+  \end{itemize}
 \end{frame}
 
 \end{document}

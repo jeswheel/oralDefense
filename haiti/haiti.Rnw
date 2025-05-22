@@ -19,8 +19,50 @@
 
 \section{Informing Policy via Dynamic Models: Cholera in Haiti}
 
-\begin{frame}
-Test
+\begin{frame}{Introduction}
+  \setbeamercovered{transparent}
+  One of the most scientifically interesting types of SSMs are \emph{mechanistic models}.
+  
+  \begin{itemize}
+    \item Used when we have some understanding of how a dynamic system evolves over time. 
+    \item Useful in modern science, and have some advantages over machine learning models \citep{baker18,hogg24}:
+    \begin{itemize}
+      \item Accounting for known (but unobserved) features can improve model performance. 
+      \item More intepretable. 
+      \item Facilitates predictions of interventions and other counter-factuals. 
+    \end{itemize}
+  \end{itemize}
+  \pause
+  In this chapter, I demonstrate these capabilities by fitting mechanistic models to the 2010-2019 cholera outbreak in Haiti. 
+\end{frame}
+
+\begin{frame}{Cholera in Haiti}
+ \begin{tabular}{cl}  
+         \begin{tabular}{c}
+           \includegraphics[height=4.3cm, width=5.5cm]{haiti/vaccination.jpeg}
+           \end{tabular}
+           & \begin{tabular}{l}
+             \parbox{0.5\linewidth}{%  change the parbox width as appropiate
+             \begin{itemize}
+              \item Haiti experienced a cholera outbreak following the devastating 2010 earthquake. 
+              \item From 2010-2019, more than \alert{800,000} recorded cases, making it one of the largest recorded outbreaks.
+              \item Oral cholera vaccination (OCV) is available, but in limited supply.
+              \item Image credit: \citet{unicef22}.
+             \end{itemize}
+    }
+         \end{tabular}  \\
+\end{tabular}
+\end{frame}
+
+\begin{frame}{Proposing interventions}
+% At the time, there was interest in whether or not vaccinations would be a viable approach to eradicate cholera from Haiti.
+
+A group of top researchers built three mechanistic models to estimate the potential impacts of various vaccination strategies \citep{lee20}.
+
+\begin{itemize}
+  \item 
+\end{itemize}
+
 \end{frame}
 
 \end{document}

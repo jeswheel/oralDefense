@@ -33,7 +33,7 @@
     \end{itemize}
   \end{itemize}
   \pause
-  In this chapter, I demonstrate these capabilities by fitting mechanistic models to the 2010-2019 cholera outbreak in Haiti. 
+  In this chapter, I demonstrate these capabilities by fitting mechanistic models to the 2010-2019 cholera outbreak in Haiti \citep{wheeler24}. 
 \end{frame}
 
 \begin{frame}{Cholera in Haiti}
@@ -60,7 +60,261 @@
 A group of top researchers built three mechanistic models to estimate the potential impacts of various vaccination strategies \citep{lee20}.
 
 \begin{itemize}
-  \item 
+  \item The distinct teams each concluded predicted cholera resurgence from Feb 2019 - Feb 2024. 
+  \item There were no confirmed cases from Feb 2019 - Sep 2022 \citep{trevisin22}. 
+  \item Though there were some cases recently recorded, not near the predicted scale \citep{PAHO23}.
+\end{itemize}
+
+\alert{Questions:} What are strengths and weaknesses of mechanistic models? What are common mistakes researchers make? How can we improve outcomes in the future?
+
+\end{frame}
+
+\begin{frame}{Available Data}
+
+<<plotHaitiData, fig.height=3.5, echo=FALSE, message=FALSE, comment=FALSE>>=
+library(haitipkg)
+library(tidyverse)
+
+dep_plot_df <- haitiCholera %>%
+  select(-report) %>%
+  pivot_longer(
+    data = .,
+    cols = -date_saturday,
+    values_to = 'cases',
+    names_to = 'dep'
+  ) %>%
+  mutate(
+    date = as.Date(date_saturday),
+    dep = gsub("\\.", "_", dep)
+  ) %>%
+  mutate(
+    dep = case_when(dep == "Grand_Anse" ~ "Grande_Anse", TRUE ~ dep)
+  )
+
+dep_labeller <- as_labeller(
+  c(
+    'Artibonite' = 'Artibonite',
+    'Sud_Est' = 'Sud-Est',
+    'Sud.Est' = 'Sud-Est',
+    'Nippes' = 'Nippes',
+    'Nord_Est' = 'Nord-Est',
+    'Nord.Est' = 'Nord-Est',
+    'Ouest' = 'Ouest',
+    'Centre' = 'Centre',
+    'Nord' = 'Nord',
+    'Sud' = 'Sud',
+    'Nord_Ouest' = 'Nord-Ouest',
+    'Nord.Ouest' = 'Nord-Ouest',
+    'Grande_Anse' = 'Grand\'Anse',
+    'Grand.Anse' = 'Grand\'Anse'
+  )
+)
+
+# Vector used to arrange figures in the same order that was used in Lee et al (2020)
+plot_order <- c(
+  'Artibonite',
+  'Sud_Est',
+  'Nippes',
+  'Nord_Est',
+  'Ouest',
+  'Centre',
+  'Nord',
+  'Sud',
+  'Nord_Ouest',
+  'Grande_Anse'
+)
+
+# Plot reported cholera cases, by department. Creates Figure 1.
+ggplot(dep_plot_df, aes(x = date, y = cases + 1)) +
+  facet_wrap(~dep, nrow = 2, labeller = dep_labeller) +
+  geom_line() +
+  theme(axis.title.x = element_blank()) +
+  ylab('Reported Cases') +
+  scale_y_log10(
+    labels = scales::trans_format("log10", scales::math_format(10^.x))
+  ) +
+  scale_x_date(
+    date_labels = "'%y",
+    breaks = seq.Date(
+      from = as.Date("2011-01-01"),
+      to = as.Date("2019-01-01"),
+      by = '2 years'
+    )
+  ) + 
+  theme_bw()
+@
+           
+\end{frame}
+
+\begin{frame}{Spatially explicit model: Model 3}
+
+ \begin{tabular}{ll}  
+         \begin{tabular}{l}
+          %%%%% SEAIR diagram
+  \resizebox{0.55\textwidth}{!}{
+    \Large
+    \setlength{\unitlength}{5pt}
+    \begin{picture}(100,70)(1,15)
+
+    % COMPARTMENTS
+    \put(39, 50){\circle{6}}
+    \put(37, 49){$\mathrm{W}_{u}$}
+
+    \put(8, 55){\framebox(6, 6){$\mathrm{S_{u0}}$}}
+    \put(8, 39){\framebox(6, 6){$\mathrm{S_{u\vaccCounter}}$}}
+    \put(36, 62.5){\framebox(6, 6){$\mathrm{A_{u}}$}}
+    \put(36, 31.5){\framebox(6, 6){$\mathrm{I_{u}}$}}
+    \put(56, 55){\framebox(6, 6){$\mathrm{R^1_{u0}}$}}
+    \put(71, 55){\framebox(6, 6){$\mathrm{R^2_{u0}}$}}
+    \put(86, 55){\framebox(6, 6){$\mathrm{R^3_{u0}}$}}
+    \put(56, 39){\framebox(6, 6){$\mathrm{R^1_{u\vaccCounter}}$}}
+    \put(71, 39){\framebox(6, 6){$\mathrm{R^2_{u\vaccCounter}}$}}
+    \put(86, 39){\framebox(6, 6){$\mathrm{R^3_{u\vaccCounter}}$}}
+
+    % INDIVIDUAL MOVEMENT
+    % S_u0 -> A_u
+    \put(15, 58.5){\vector(3, 1.2){20}}
+
+    % S_u0 -> I_u
+    \put(15, 57.5){\vector(1, -1.1){20}}
+
+    % S_uz -> I_u
+    \put(15, 41.5){\vector(3, -1.2){20}}
+
+    % S_uz -> A_u
+    \put(15, 42.5){\vector(1, 1.1){20}}
+
+    % I_u -> R_u0
+    \put(43, 66){\vector(2, -1){12}}
+
+    % A_u -> R_uz
+    \multiput(43, 64)(1.25, -1.6){12}{\line(1, -1.3){0.7}}
+    \put(57, 46){\vector(1, -1.3){0.2}}
+
+    \put(43, 36){\vector(1.7, 2){15}}
+
+    \multiput(60, 54)(0, -2){4}{\line(0, -1){1}}
+    \put(60, 46){\vector(0, -1){0.5}}
+
+    \multiput(74, 54)(0, -2){4}{\line(0, -1){1}}
+    \put(74, 46){\vector(0, -1){0.5}}
+
+    \multiput(89, 54)(0, -2){4}{\line(0, -1){1}}
+    \put(89, 46){\vector(0, -1){0.5}}
+
+    \put(63, 58){\vector(1, 0){7}}
+    \put(78, 58){\vector(1, 0){7}}
+
+    \put(63, 42){\vector(1, 0){7}}
+    \put(78, 42){\vector(1, 0){7}}
+
+    \multiput(39, 61.5)(0, -1){8}{\line(0, -1){0.3}}
+    \put(39,54){\vector(0, -1){0.5}}
+
+    \multiput(39, 38.5)(0, 1){8}{\line(0, 1){0.3}}
+    \put(39,46){\vector(0, 1){0.5}}
+
+    \cbezier(89,62)(80, 85)(20, 85)(12,62)
+    \put(12.2,62.5){\vector(-1, -3.5){0.3}}
+
+    \cbezier(89,38)(80, 15)(20, 15)(12,38)
+    \put(12.2,37.5){\vector(-1, 3.5){0.3}}
+
+    \multiput(11, 54)(0, -2){4}{\line(0, -1){1}}
+    \put(11, 46){\vector(0, -1){0.5}}
+
+    % DEMOGRAPHY
+    % -> S
+    \put(0, 58){\vector(1, 0){7}}
+    \put(1, 59){$\mathrm{\mu_{\demography S_{u0}}}$}
+
+    % S Death
+    \put(10, 62){\vector(0, 1){7}}
+    \put(8, 64){$\mathrm{\muDeath}$}
+    \put(10, 38){\vector(0, -1){7}}
+    \put(8, 34){$\mathrm{\muDeath}$}
+
+    % A + I death
+    \put(39, 69.5){\vector(0, 1){7}}
+    \put(37, 71.5){$\mathrm{\muDeath}$}
+
+    \put(39, 31.5){\vector(0, -1){7}}
+    \put(30, 27.5){$\mathrm{\muDeath + \choleraDeath}$}
+
+    % R Death
+    \put(59, 62){\vector(0, 1){7}}
+    \put(57, 64){$\mathrm{\muDeath}$}
+
+    \put(74, 62){\vector(0, 1){7}}
+    \put(72, 64){$\mathrm{\muDeath}$}
+
+    \put(59, 38){\vector(0, -1){7}}
+    \put(57, 34){$\mathrm{\muDeath}$}
+
+    \put(74, 38){\vector(0, -1){7}}
+    \put(72, 34){$\mathrm{\muDeath}$}
+
+    \put(93, 42){\vector(1, 0){7}}
+    \put(95.5, 43){$\mathrm{\muDeath}$}
+
+    \put(93, 58){\vector(1, 0){7}}
+    \put(95.5, 59){$\mathrm{\muDeath}$}
+
+    % W death
+    \multiput(43, 50)(1, 0){7}{\line(1, 0){0.2}}
+    \put(50.2, 50){\vector(1, 0){0.5}}
+    \put(44, 51){$\mathrm{\Wremoval}$}
+
+    \end{picture}
+  }  
+         \end{tabular}
+           & \begin{tabular}{l}
+             \parbox{0.38\linewidth}{%  change the parbox width as appropiate
+             \begin{itemize}
+              \item Spatial Dependence between units.
+              \item Stochastic transmission rates.
+              \item Overdispersed Markov counting system.
+              \item Rainfall driven transmission.
+              \item Environmental reservoir of bacteria.
+              \item Adjustments for Hurricane Mathew (Oct 2016).
+             \end{itemize}
+    }
+         \end{tabular}  \\
+\end{tabular}
+
+\end{frame}
+
+\begin{frame}{Model Fitting}
+The iterated block particle filter (IBPF) was used to fit the model \citep{ionides24}.
+
+\begin{table}[ht]
+\centering
+\begin{tabular}{|l|c|c|c|}
+\hline
+ & \textbf{Our Fit} & \textbf{Original Fit} & \textbf{Benchmark} \\
+\hline
+Log-likelihood & \cellcolor{green!20}-17332.9 & \cellcolor{red!20}-33832.6 & -17932.6 \\
+\hline
+AIC & \cellcolor{green!20}34733.9 & \cellcolor{red!20}67723.2 & 35945.0 \\
+\hline
+\end{tabular}
+\caption{Comparison of our fitted model to original parameters used to inform vaccination policy.}
+\label{tab:fit_comparison}
+\end{table}
+
+\end{frame}
+
+\begin{frame}{Key findings}
+
+\begin{itemize}
+  \item Confirmed importance of rainfall and reduced transmission over time.
+  \item Importance of proper model diagnostics.
+  \begin{itemize}
+    \item Comparing to benchmarks.
+    \item Checking results against features of the system. 
+  \end{itemize}
+  \item Reproducibility and Extendability. 
+  \item Confirmed previous findings: stochastic models are better descriptions of the system, and over-dispersed models are best.
 \end{itemize}
 
 \end{frame}

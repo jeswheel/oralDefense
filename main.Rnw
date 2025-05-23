@@ -15,7 +15,7 @@
 	}
 
 	\usepackage{standalone}
-	% \usepackage{xcolor}
+	\usepackage{colortbl,xcolor}
 	\usepackage{natbib}
 	\usepackage{tikz}
 	\usepackage{bm}

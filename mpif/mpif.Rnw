@@ -14,13 +14,466 @@
 	\newcommand{\famName}[1]{\textsc{#1}}
 	\newcommand{\themename}{\textbf{\textsc{Gotham}}}
 
+<<MPIFSetup, include=FALSE,echo=FALSE,results='hide'>>=
+
+knitr::opts_chunk$set(
+  echo = FALSE,
+  warning = FALSE,
+  message = FALSE,
+  fig.align = 'center',
+  dev = 'cairo_pdf'
+)
+
+library(knitr)       # Necessary for Rnw file
+library(tidyverse)
+library(panelPomp)        # Used for the bake function
+library(latex2exp)
+# source("mpif_example/functions.R")
+
+# Setting black and white ggplot2 theme for entire document.
+theme_set(
+  theme_bw() +
+    theme(
+      plot.title = element_text(hjust = 0.5)
+    )
+)
+
+calculate_ellipse <- function(mu, sigma) {
+  radius <- sqrt(2 * stats::qf(0.95, 2, Inf))
+  inner <- function(i) {
+    chol_decomp <- chol(sigma[[i]])
+    angles <- (0:100) * 2 * pi / 100
+    unit.circle <- cbind(cos(angles), sin(angles))
+    ellipse <- t(mu[i, ] + radius * t(unit.circle %*% chol_decomp))
+    ellipse <- as.data.frame(ellipse)
+    colnames(ellipse) <- c("X1","X2")
+    ellipse$group <- i
+    ellipse
+  }
+  do.call(rbind, purrr::map(1:length(sigma), inner))
+}
+
+MARG_COLS <- c("#c05502", "#178a68")
+
+#' Gaussian-Gaussian, single unit, data cloning algorithm.
+#'
+#' This function performs data-cloning on the special case with Gaussian
+#' likelihood and prior, with the MLE centered at zero.
+#'
+#' @param Lambda Covariance matrix of likelihood.
+#' @param Prior Prior distribution for parameters.
+#' @param M Number of iterations.
+#'
+#' @return
+GG_DC <- function(Lambda, Prior, M) {
+
+  is_pd <- matrixcalc::is.positive.definite(
+    Lambda
+  )
+
+  if (!is_pd) stop("Lambda must be a postive definite matrix")
+
+  # A single step of the data cloning algorithm
+  DC_update <- function(prior) {
+    new_precision <- prior$precision + Lambda
+    new_mean <- solve(new_precision) %*% (prior$precision %*% prior$mean)
+
+    new_prior <- list(
+      'mean' = new_mean,
+      'precision' = new_precision
+    )
+    new_prior
+  }
+
+  all_DC_dists <- list()
+  all_DC_dists[[1]] <- Prior
+
+  priorDC <- Prior
+
+  for (i in 1:M) {
+    priorDC <- DC_update(priorDC)
+    all_DC_dists[[i + 1]] <- priorDC
+  }
+
+  all_DC_dists
+}
+
+#' Gaussian-Gaussian, single unit, perturbed data cloning algorithm.
+#'
+#' This function performs perturbed data-cloning on the special case with Gaussian
+#' likelihood and prior, with the MLE centered at zero.
+#'
+#' @param Lambda Covariance matrix of likelihood.
+#' @param Prior Prior distribution for parameters.
+#' @param M Number of iterations.
+#'
+#' @return
+GG_PDC <- function(Lambda, Prior, M, init_noise = 1/4) {
+
+  is_pd <- matrixcalc::is.positive.definite(
+    Lambda
+  )
+
+  if (!is_pd) stop("Lambda must be a postive definite matrix")
+
+  # A single step of the data cloning algorithm
+  PDC_update <- function(prior, m, tau0 = 1/init_noise) {
+
+    # Goes to infinity quite fast (i.e., the variance goes to zero fast)
+    var_eps <- diag(1 / (tau0 * m), nrow = 2, ncol = 2)
+    tmp_prior <- prior
+
+    # Add random noise to prior, with variance 1 / (tau0 * m^2) -> 0
+    tmp_prior$precision <- solve(solve(prior$precision) + var_eps)
+
+    # Now do DC.
+    new_precision <- tmp_prior$precision + Lambda
+    new_mean <- solve(new_precision) %*% (tmp_prior$precision %*% tmp_prior$mean)
+
+    new_prior <- list(
+      'mean' = new_mean,
+      'precision' = new_precision
+    )
+    new_prior
+  }
+
+  all_DC_dists <- list()
+  all_DC_dists[[1]] <- Prior
+
+  priorDC <- Prior
+
+  for (i in 1:M) {
+    priorDC <- PDC_update(priorDC, m = i, tau0 = 1/init_noise)
+    all_DC_dists[[i + 1]] <- priorDC
+  }
+
+  all_DC_dists
+}
+
+#' Gaussian-Gaussian, single unit, marginalized data cloning algorithm.
+#'
+#' This function performs marginalized data-cloning on the special case with
+#' Gaussian likelihood and prior, with the MLE centered at zero.
+#'
+#' @param Lambda Covariance matrix of likelihood.
+#' @param Prior Prior distribution for parameters.
+#' @param M Number of iterations.
+#'
+#' @return
+GG_MDC <- function(Lambda, Prior, M) {
+
+  prior <- Prior
+
+  is_pd <- matrixcalc::is.positive.definite(
+    Lambda
+  )
+
+  if (!is_pd) stop("Lambda must be a postive definite matrix")
+
+  all_MDC_dists <- list()
+  all_MDC_dists[[1]] <- prior
+
+  for (i in 1:M) {
+    prior <- all_MDC_dists[[i]]
+    # prior$precision <- diag(diag(prior$precision))
+    new_prior <- GG_DC(Lambda, prior, 1)[[2]]
+    new_prior$precision <- diag(diag(new_prior$precision))
+    all_MDC_dists[[i+1]] <- new_prior
+    # prior <- all_MDC_dists[[i+1]]
+  }
+  all_MDC_dists
+}
+
+GG_PMDC <- function(Lambda, Prior, M, init_noise = 1/4) {
+
+  prior <- Prior
+
+  is_pd <- matrixcalc::is.positive.definite(
+    Lambda
+  )
+
+  if (!is_pd) stop("Lambda must be a postive definite matrix")
+
+  all_MDC_dists <- list()
+  all_MDC_dists[[1]] <- prior
+
+  for (i in 1:M) {
+    prior <- all_MDC_dists[[i]]
+
+    # Goes to infinity quite fast (i.e., the variance goes to zero fast)
+    var_eps <- diag(init_noise / i, nrow = 2, ncol = 2)
+    tmp_prior <- prior
+
+    # Add random noise to prior, with variance 1 / (tau0 * m^2) -> 0
+    tmp_prior$precision <- solve(solve(prior$precision) + var_eps)
+
+    # prior$precision <- diag(diag(prior$precision))
+    new_prior <- GG_DC(Lambda, tmp_prior, 1)[[2]]
+    new_prior$precision <- diag(diag(new_prior$precision))
+    all_MDC_dists[[i+1]] <- new_prior
+    # prior <- all_MDC_dists[[i+1]]
+  }
+  all_MDC_dists
+}
+@
 
 \begin{document}
 
 \section{The Marginalized Panel Iterated Filter (MPIF)}
 
-\begin{frame}
-Test
+\begin{frame}{Motivation}
+Often we have a collection of related time series called, called \emph{panel data}.
+We want to make inference using the entire collection, not just on each time series.
+
+Examples
+  \begin{itemize}
+    \item Model for disease outbreaks of the same disease, different locations (hospitals / cities) \citep{lee20}.
+    \item Experiments / observational studies on ecological populations \citep{searle16}.
+    \item Longitudinal studies using within-host dynamic models \citep{ranjeva17}.
+  \end{itemize}
+  
+  Mechanistic models are routinely fitted to time series data but seldom to panel data, despite its widespread availability.
+  
+  % This suggests that the practical difficulties for existing procedures. 
+\end{frame}
+
+\begin{frame}{Panel models}
+  Measurements for unit $u$ taken at times $t_{u, 1:N_u}$. Observed and latent process at these times denoted $Y_{u, n}$ and $X_{u, n}$, respectively.
+  
+  Each unit $u$ defines an independent POMP model, the entire collection of models is a PanelPOMP.
+  
+  $$
+  \mathcal{L}(\paramVec; \bm{y}^*) = \int \prod_{u = 1}^U f_{X_{u, 0}}\big(x_{u, 0};\, \paramVec\big)\prod_{n = 1}^{N_u} f_{X_{u, n}|X_{u, n-1}}\big(x_{u, n}|x_{u, n-1}; \, \paramVec\big)f_{Y_{u, n}|X_{u, n}}\big(y_{u, n}|x_{u, n}; \, \paramVec\big) dx_{1:U,0:N_u}.
+  $$
+  
+  The parameter vector $\theta$ has shared components $\phi$, and unit specific components $\psi_{1:U}$.
+  $$\theta = (\phi, \psi_{1:U})$$.
+  
+\end{frame}
+
+\begin{frame}{The problem}
+
+  \begin{itemize}
+    \item Particle filters work in low-dimensions, can be applied independently to units.
+    \item Iterated filtering (IF) is an extension used to perform maximum likelihood estimation \citep{ionides15}.
+    \item IF introduces dependence because of shared $\theta$, making it a high-dimensional problem. 
+  \end{itemize}
+
+\end{frame}
+
+\begin{frame}{Background: Data cloning and iterated filtering}
+  
+  IF is a special type of Data cloning \citep{lele07}, which is repeated applications of Bayes rule. 
+  
+  Denote $\pi_i(\theta)$ as the posterior distribution of the parameter vector $\theta$ after the $i$th Bayesian update, and $\mathcal{L}(\paramVec; \bm{y}^*)$ as the likelihood
+\begin{align*}
+\pi_1(\theta) &\propto \mathcal{L}(\paramVec; \bm{y}^*)\pi_0(\theta), \\
+\pi_2(\theta) &\propto \mathcal{L}(\paramVec; \bm{y}^*)\pi_1(\theta) \propto \mathcal{L}(\paramVec; \bm{y}^*)^2\pi_0(\theta),\\
+&\vdots\\
+\pi_m(\theta) &\propto \mathcal{L}(\paramVec; \bm{y}^*)^m\pi_0(\theta).
+\end{align*}
+If we let $m\rightarrow \infty$, the effect of the initial prior distribution diminishes, and the $m$th posterior has all of its mass centered at the MLE.
+
+\end{frame}
+
+\begin{frame}{Iterated filtering}
+  Loosely speaking, iterated filtering is just data cloning with the additional pieces: 
+  \begin{enumerate}
+    \item Likelihood cannot be evaluated exactly, it's approximated using particle filters. 
+    \item At each time-step, the parameter particles are perturbed.
+    \item Parameter particles reweighted using conditional log-likelihoods.
+  \end{enumerate}
+  The perturbation of parameters is necessary to avoid particle depletion, a known problem with particle filters + Bayesian inference \citep{chen24}.
+  
+  The perturbations introduce a loss of information \citep{liu01}, so are decreased over the cloning iteration.
+\end{frame}
+
+\begin{frame}{Iterated filtering for panel models}
+  Iterated filtering takes data one observation at a time. In the panel setting, this means we process by unit $u$. Ignoring perturbations, the algorithm iterates over $(m, u)$: 
+  \begin{align}
+    \pi_{m, u}(\theta) &\propto \mathcal{L}_u(\paramVec; y_u^*)\, \pi_{m, u-1}(\theta) = \mathcal{L}_u(\phi, \psi_u; y_u^*)\, \pi_{m, u-1}(\theta), \label{eq:PIFupdate}
+  \end{align}
+    Using $\pi_{0, 0}(\theta)$ as the initial prior distribution. Even if prior is independent, we get dependence by iterating Eq.~\ref{eq:PIFupdate} over $u$. Two options of iterated filtering: 
+    \begin{itemize}
+      \item Perturb all parameters at each time step (high loss of information). 
+      \item When using data from unit $u$, only perturb $\phi$ and $\psi_u$ (the PIF algorithm, high particle depletion) \citep{breto20}. 
+    \end{itemize}
+\end{frame}
+
+\begin{frame}{MPIF motivation}
+  If the last prior $\pi_{m, u-1}(\theta)$ has independence: $\pi_{m, u-1}(\theta) = f(\psi_{-u})g(\phi, \psi_{u})$, then there is no need to resample particles $\psi_{-u}$. This would avoid the particle depletion \emph{and} loss-of-information.
+  
+  This leads to marginalized data cloning (repeating Eqs.~\ref{eq:margBayes}--\ref{eq:MPIFupdate}). 
+  
+  \begin{align}
+\tilde{\pi}_{m, u}(\theta) &\propto \mathcal{L}_{u}(y^*_u;\, \phi, \psi_u)\, \pi_{m, u-1}(\theta) \label{eq:margBayes}\\
+\pi_{m, u}(\theta) &\propto \int \! \tilde{\pi}_{m, u}(\theta) \, d\phi \, d\psi_u \, \times \int \! \tilde{\pi}_{m, u}(\theta) \, d\psi_{-u} \label{eq:MPIFupdate}.
+\end{align}
+\end{frame}
+
+\begin{frame}{Marginalized Bayes: Guassian figure}
+
+<<figDC, fig.height=3.25, fig.width=5>>=
+Lambda <- rbind(
+  c(0.8, 0.45),
+  c(0.45, 1.1)
+)
+
+Prior <- list(
+  'mean' = c(11, 8),
+  'precision' = diag(c(1, 1))
+)
+
+all_DC_dists <- GG_DC(
+  Lambda = Lambda,
+  Prior = Prior,
+  M = 100
+)
+
+all_MDC_dists <- GG_MDC(
+  Lambda = Lambda,
+  Prior = Prior,
+  M = 100
+)
+
+M <- 5
+K <- ncol(Lambda) - 1
+
+df_mu_DC <- data.frame(
+  'mu1' = rep(NA_real_, (M + 1) * K),
+  'mu2' = rep(NA_real_, (M + 1) * K),
+  'step' = rep(0:M, each = K),
+  'group' = "DC"
+)
+df_Sigma_DC <- data.frame(
+  'X1' = rep(NA_real_, (M + 1) * 101 * K),
+  'X2' = rep(NA_real_, (M + 1) * 101 * K),
+  'group' = 'DC',
+  'step' = rep(NA_integer_, (M + 1) * 101 * K)
+)
+
+
+df_mu_MDC <- data.frame(
+  'mu1' = rep(NA_real_, (M + 1) * K),
+  'mu2' = rep(NA_real_, (M + 1) * K),
+  'step' = rep(0:M, each = K),
+  'group' = "MDC"
+)
+df_Sigma_MDC <- data.frame(
+  'X1' = rep(NA_real_, (M + 1) * 101 * K),
+  'X2' = rep(NA_real_, (M + 1) * 101 * K),
+  'group' = "MDC",
+  'step' = rep(NA_integer_, (M + 1) * 101 * K)
+)
+
+# for (j in 1:M) {
+for (j in 0:M) {
+  start_row <- (K * (j)) + 1
+  start_sigma <- ((j) * 101 * K) + 1
+
+  tmp_transition <- t(all_DC_dists[[j + 1]]$mean)
+  df_mu_DC[start_row:(start_row + K - 1), c('mu1', 'mu2')] <- tmp_transition
+  Sigma_j <- list(
+    solve(all_DC_dists[[j + 1]]$precision)
+  )
+  df_Sigma_DC[start_sigma:(start_sigma + (101 * K) - 1),
+              c('X1', "X2", "group")] <- calculate_ellipse(tmp_transition, Sigma_j)
+  df_Sigma_DC[start_sigma:(start_sigma + (101 * K) - 1),
+              'step'] <- as.integer(j)
+
+
+  tmp_transition <- t(all_MDC_dists[[j + 1]]$mean)
+  df_mu_MDC[start_row:(start_row + K - 1), c('mu1', 'mu2')] <- tmp_transition
+  Sigma_j <- list(
+    solve(all_MDC_dists[[j + 1]]$precision)
+  )
+  df_Sigma_MDC[start_sigma:(start_sigma + (101 * K) - 1),
+              c('X1', "X2", "group")] <- calculate_ellipse(tmp_transition, Sigma_j)
+  df_Sigma_MDC[start_sigma:(start_sigma + (101 * K) - 1),
+              'step'] <- as.integer(j)
+}
+
+df_mu_DC$group <- 'DC'
+df_mu_MDC$group <- 'MDC'
+df_Sigma_DC$group <- 'DC'
+df_Sigma_MDC$group <- 'MDC'
+
+like_elipse <- calculate_ellipse(
+  matrix(c(0, 0), nrow = 1),
+  list(solve(Lambda))
+) |>
+  dplyr::select(-group)
+
+df_all_mu <- dplyr::bind_rows(
+  df_mu_DC, df_mu_MDC
+)
+
+df_all_Sigma <- dplyr::bind_rows(
+  df_Sigma_DC, df_Sigma_MDC
+)
+
+method_names <- c(
+  DC = 'Data Cloning',
+  MDC = 'Marginalized Data Cloning'
+)
+
+ggplot(df_all_mu) +
+  geom_point(
+    aes(x = mu1, y = mu2, col = as.factor(step)),
+    pch = 18, size = 1
+  ) +
+  geom_path(
+    data = df_all_Sigma,
+    aes(x = X1, y = X2, col = as.factor(step))
+  ) +
+  geom_path(
+    data = like_elipse,
+    aes(x = X1, y = X2), linetype = 'dashed'
+  ) +
+  geom_point(x = 0, y = 0, col = 'red', pch = 'x') +
+  theme_bw() +
+  scale_x_continuous(limits = c(-3.12, 13.5)) +
+  scale_y_continuous(limits = c(-3.12, 13.5)) +
+  theme(aspect.ratio = 1) +
+  labs(color = 'Step') +
+  scale_color_manual(
+    values = c(
+      "#800026",
+      "#bd0026",
+      "#e31a1c",
+      "#fc4e2a",
+      "#fd8d3c",
+      "#feb24c"
+    )
+  ) +
+  labs(x = TeX('$\\mu_2$'), y = TeX('$\\mu_1$')) +
+  theme(legend.position = 'right') +
+  facet_wrap(~group, labeller = labeller(group = method_names)) + 
+  theme(plot.margin = unit(c(0, 0, 0, 0), 'cm'))
+@
+
+\end{frame}
+
+\begin{frame}{MPIF theory}
+
+  \begin{itemize}
+    \item Like IF extends data cloning, the MPIF algorithm extends this marginalized data cloning.
+    \item Existing theory for IF algorithms cannot readily be extended to MPIF, because of the non-linearity introduced by the marginalization step. 
+    \item A natural first question is whether or not marginalized data cloning converges.
+    \begin{itemize}
+      \item Unfortunately, a few toy examples suggests not always.
+    \end{itemize}
+  \end{itemize}
+  
+\end{frame}
+
+\begin{frame}{Marginalized data cloning: Gaussian likelihoods}
+  Convergence is explored via Gaussian likelihoods.
+  The properties of this special case is relevant to the broader class of models that is well approximated by Gaussian models, (e.g., local asymptotic normality \citep{lecam00}).
+  
+  \begin{theorem}[Marginalized data cloning with Gaussian densities]
+    Let $\mathcal{L}_u(y_u^*; \, \phi, \psi_u)$ be the likelihood that corresponds to a Gaussian distribution with mean $(\phi^*, \psi_u^*)$ and precision $\Lambda_u^* \in \R^{2\times2}$. Under suitable conditions on the matrices $\Lambda^*_u$, then if the initial prior density is Gaussian, then the density of the $m$th iteration of Eq.~\ref{eq:MPIFupdate} converges to a point mass at the MLE $(\phi^*, \psi_1^*, \ldots, \psi^*_U)$ as $m\rightarrow \infty$.
+  \end{theorem}
 \end{frame}
 
 \end{document}

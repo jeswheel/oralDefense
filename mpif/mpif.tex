@@ -63,13 +63,138 @@
 
 	\newcommand{\famName}[1]{\textsc{#1}}
 	\newcommand{\themename}{\textbf{\textsc{Gotham}}}
+
+
+
 \IfFileExists{upquote.sty}{\usepackage{upquote}}{}
 \begin{document}
 
 \section{The Marginalized Panel Iterated Filter (MPIF)}
 
-\begin{frame}
-Test
+\begin{frame}{Motivation}
+Often we have a collection of related time series called, called \emph{panel data}.
+We want to make inference using the entire collection, not just on each time series.
+
+Examples
+  \begin{itemize}
+    \item Model for disease outbreaks of the same disease, different locations (hospitals / cities) \citep{lee20}.
+    \item Experiments / observational studies on ecological populations \citep{searle16}.
+    \item Longitudinal studies using within-host dynamic models \citep{ranjeva17}.
+  \end{itemize}
+  
+  Mechanistic models are routinely fitted to time series data but seldom to panel data, despite its widespread availability.
+  
+  % This suggests that the practical difficulties for existing procedures. 
+\end{frame}
+
+\begin{frame}{Panel models}
+  Measurements for unit $u$ taken at times $t_{u, 1:N_u}$. Observed and latent process at these times denoted $Y_{u, n}$ and $X_{u, n}$, respectively.
+  
+  Each unit $u$ defines an independent POMP model, the entire collection of models is a PanelPOMP.
+  
+  $$
+  \mathcal{L}(\paramVec; \bm{y}^*) = \int \prod_{u = 1}^U f_{X_{u, 0}}\big(x_{u, 0};\, \paramVec\big)\prod_{n = 1}^{N_u} f_{X_{u, n}|X_{u, n-1}}\big(x_{u, n}|x_{u, n-1}; \, \paramVec\big)f_{Y_{u, n}|X_{u, n}}\big(y_{u, n}|x_{u, n}; \, \paramVec\big) dx_{1:U,0:N_u}.
+  $$
+  
+  The parameter vector $\theta$ has shared components $\phi$, and unit specific components $\psi_{1:U}$.
+  $$\theta = (\phi, \psi_{1:U})$$.
+  
+\end{frame}
+
+\begin{frame}{The problem}
+
+  \begin{itemize}
+    \item Particle filters work in low-dimensions, can be applied independently to units.
+    \item Iterated filtering (IF) is an extension used to perform maximum likelihood estimation \citep{ionides15}.
+    \item IF introduces dependence because of shared $\theta$, making it a high-dimensional problem. 
+  \end{itemize}
+
+\end{frame}
+
+\begin{frame}{Background: Data cloning and iterated filtering}
+  
+  IF is a special type of Data cloning \citep{lele07}, which is repeated applications of Bayes rule. 
+  
+  Denote $\pi_i(\theta)$ as the posterior distribution of the parameter vector $\theta$ after the $i$th Bayesian update, and $\mathcal{L}(\paramVec; \bm{y}^*)$ as the likelihood
+\begin{align*}
+\pi_1(\theta) &\propto \mathcal{L}(\paramVec; \bm{y}^*)\pi_0(\theta), \\
+\pi_2(\theta) &\propto \mathcal{L}(\paramVec; \bm{y}^*)\pi_1(\theta) \propto \mathcal{L}(\paramVec; \bm{y}^*)^2\pi_0(\theta),\\
+&\vdots\\
+\pi_m(\theta) &\propto \mathcal{L}(\paramVec; \bm{y}^*)^m\pi_0(\theta).
+\end{align*}
+If we let $m\rightarrow \infty$, the effect of the initial prior distribution diminishes, and the $m$th posterior has all of its mass centered at the MLE.
+
+\end{frame}
+
+\begin{frame}{Iterated filtering}
+  Loosely speaking, iterated filtering is just data cloning with the additional pieces: 
+  \begin{enumerate}
+    \item Likelihood cannot be evaluated exactly, it's approximated using particle filters. 
+    \item At each time-step, the parameter particles are perturbed.
+    \item Parameter particles reweighted using conditional log-likelihoods.
+  \end{enumerate}
+  The perturbation of parameters is necessary to avoid particle depletion, a known problem with particle filters + Bayesian inference \citep{chen24}.
+  
+  The perturbations introduce a loss of information \citep{liu01}, so are decreased over the cloning iteration.
+\end{frame}
+
+\begin{frame}{Iterated filtering for panel models}
+  Iterated filtering takes data one observation at a time. In the panel setting, this means we process by unit $u$. Ignoring perturbations, the algorithm iterates over $(m, u)$: 
+  \begin{align}
+    \pi_{m, u}(\theta) &\propto \mathcal{L}_u(\paramVec; y_u^*)\, \pi_{m, u-1}(\theta) = \mathcal{L}_u(\phi, \psi_u; y_u^*)\, \pi_{m, u-1}(\theta), \label{eq:PIFupdate}
+  \end{align}
+    Using $\pi_{0, 0}(\theta)$ as the initial prior distribution. Even if prior is independent, we get dependence by iterating Eq.~\ref{eq:PIFupdate} over $u$. Two options of iterated filtering: 
+    \begin{itemize}
+      \item Perturb all parameters at each time step (high loss of information). 
+      \item When using data from unit $u$, only perturb $\phi$ and $\psi_u$ (the PIF algorithm, high particle depletion) \citep{breto20}. 
+    \end{itemize}
+\end{frame}
+
+\begin{frame}{MPIF motivation}
+  If the last prior $\pi_{m, u-1}(\theta)$ has independence: $\pi_{m, u-1}(\theta) = f(\psi_{-u})g(\phi, \psi_{u})$, then there is no need to resample particles $\psi_{-u}$. This would avoid the particle depletion \emph{and} loss-of-information.
+  
+  This leads to marginalized data cloning (repeating Eqs.~\ref{eq:margBayes}--\ref{eq:MPIFupdate}). 
+  
+  \begin{align}
+\tilde{\pi}_{m, u}(\theta) &\propto \mathcal{L}_{u}(y^*_u;\, \phi, \psi_u)\, \pi_{m, u-1}(\theta) \label{eq:margBayes}\\
+\pi_{m, u}(\theta) &\propto \int \! \tilde{\pi}_{m, u}(\theta) \, d\phi \, d\psi_u \, \times \int \! \tilde{\pi}_{m, u}(\theta) \, d\psi_{-u} \label{eq:MPIFupdate}.
+\end{align}
+\end{frame}
+
+\begin{frame}{Marginalized Bayes: Guassian figure}
+
+\begin{knitrout}
+\definecolor{shadecolor}{rgb}{0.969, 0.969, 0.969}\color{fgcolor}
+
+{\centering \includegraphics[width=\maxwidth]{figure/figDC-1} 
+
+}
+
+
+\end{knitrout}
+
+\end{frame}
+
+\begin{frame}{MPIF theory}
+
+  \begin{itemize}
+    \item Like IF extends data cloning, the MPIF algorithm extends this marginalized data cloning.
+    \item Existing theory for IF algorithms cannot readily be extended to MPIF, because of the non-linearity introduced by the marginalization step. 
+    \item A natural first question is whether or not marginalized data cloning converges.
+    \begin{itemize}
+      \item Unfortunately, a few toy examples suggests not always.
+    \end{itemize}
+  \end{itemize}
+  
+\end{frame}
+
+\begin{frame}{Marginalized data cloning: Gaussian likelihoods}
+  Convergence is explored via Gaussian likelihoods.
+  The properties of this special case is relevant to the broader class of models that is well approximated by Gaussian models, (e.g., local asymptotic normality \citep{lecam00}).
+  
+  \begin{theorem}[Marginalized data cloning with Gaussian densities]
+    Let $\mathcal{L}_u(y_u^*; \, \phi, \psi_u)$ be the likelihood that corresponds to a Gaussian distribution with mean $(\phi^*, \psi_u^*)$ and precision $\Lambda_u^* \in \R^{2\times2}$. Under suitable conditions on the matrices $\Lambda^*_u$, then if the initial prior density is Gaussian, then the density of the $m$th iteration of Eq.~\ref{eq:MPIFupdate} converges to a point mass at the MLE $(\phi^*, \psi_1^*, \ldots, \psi^*_U)$ as $m\rightarrow \infty$.
+  \end{theorem}
 \end{frame}
 
 \end{document}

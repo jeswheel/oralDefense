@@ -138,15 +138,44 @@ If we let $m\rightarrow \infty$, the effect of the initial prior distribution di
   The perturbations introduce a loss of information \citep{liu01}, so are decreased over the cloning iteration.
 \end{frame}
 
+\begin{frame}{PIF Theory}
+  The panel iterated filter (PIF) is a type of IF, mitigating information loss \citep{breto20}. 
+  It has been successfully used to estimate the MLE previously \citep[e.g.,][]{domeyer22}.
+  
+  \begin{theorem}[Chapter 4, Theorem 1]
+    Extends theory of \citet{chen24} to panel models. Denote the output of the PIF algorithm as $\Theta_{1:J}^{(M)}$.
+  Then there exists some positive sequences $\{C_M\}_{M \geq 1}$ and $\{\epsilon_M\}_{M \geq 1}$ where $\lim_{M \rightarrow \infty}\epsilon_M = 0$ such that for all $(J, M) \in \mathbb{N}^2$,
+  $$
+  E\bigg[\Big|\frac{1}{J}\sum_{i=1}^J \Theta_j^{(M)} - \hat{\theta}\Big|_2\bigg] \leq \frac{C_M}{\sqrt{J}} + \epsilon_M
+  $$
+  \end{theorem}
+  
+\end{frame}
+
+\begin{frame}{Proof sketch and discussion}
+  Conditions:
+  \begin{itemize}
+    \item On parameter space $\Theta$: Compact, corners not too "sharp" \citep[regular compact set, Def~1 of][]{chen24}.
+    \item Regularity conditions on the model (positive and finite likelihood, densities are smooth functions of $\theta$). 
+    \item Conditions on the parameter perturbations (type of perturbations, and cooling schedule). 
+  \end{itemize}
+  Proof Sketch: 
+  \begin{itemize}
+    \item \citet{chen24} provides framework for convergence of IF of POMP models; we write a general PanelPOMP as a POMP model, and PIF is a special case of IF for these models. 
+  \end{itemize}
+\end{frame}
+
 \begin{frame}{Iterated filtering for panel models}
-  Iterated filtering takes data one observation at a time. In the panel setting, this means we process by unit $u$. Ignoring perturbations, the algorithm iterates over $(m, u)$: 
+  Iterated filtering takes data one observation at a time. 
+  In the panel setting, this means we process by unit $u$. 
+  Ignoring perturbations, the algorithm iterates over $(m, u)$: 
   \begin{align}
     \pi_{m, u}(\theta) &\propto \mathcal{L}_u(\paramVec; y_u^*)\, \pi_{m, u-1}(\theta) = \mathcal{L}_u(\phi, \psi_u; y_u^*)\, \pi_{m, u-1}(\theta), \label{eq:PIFupdate}
   \end{align}
     Using $\pi_{0, 0}(\theta)$ as the initial prior distribution. Even if prior is independent, we get dependence by iterating Eq.~\ref{eq:PIFupdate} over $u$. Two options of iterated filtering: 
     \begin{itemize}
       \item Perturb all parameters at each time step (high loss of information). 
-      \item When using data from unit $u$, only perturb $\phi$ and $\psi_u$ (the PIF algorithm, high particle depletion) \citep{breto20}. 
+      \item When using data from unit $u$, only perturb $\phi$ and $\psi_u$ (the PIF algorithm, high particle depletion). 
     \end{itemize}
 \end{frame}
 
@@ -192,9 +221,22 @@ If we let $m\rightarrow \infty$, the effect of the initial prior distribution di
   Convergence is explored via Gaussian likelihoods.
   The properties of this special case is relevant to the broader class of models that is well approximated by Gaussian models, (e.g., local asymptotic normality \citep{lecam00}).
   
-  \begin{theorem}[Marginalized data cloning with Gaussian densities]
+  \begin{theorem}[Chapter 4, Theorem 2]
     Let $\mathcal{L}_u(y_u^*; \, \phi, \psi_u)$ be the likelihood that corresponds to a Gaussian distribution with mean $(\phi^*, \psi_u^*)$ and precision $\Lambda_u^* \in \R^{2\times2}$. Under suitable conditions on the matrices $\Lambda^*_u$, then if the initial prior density is Gaussian, then the density of the $m$th iteration of Eq.~\ref{eq:MPIFupdate} converges to a point mass at the MLE $(\phi^*, \psi_1^*, \ldots, \psi^*_U)$ as $m\rightarrow \infty$.
   \end{theorem}
+\end{frame}
+
+\begin{frame}{Gaussian Theory: Proof sketch}
+
+\begin{itemize}
+  \item Gaussian priors + Gaussian likelihoods imply Gaussian posteriors.
+  \item Transform data so likelihood is centered at zero.
+  \item The marginalization step only modifies the covariance, setting off-diagonal terms to zero.
+  \item Diagonals of covariance shrink to zero asymptotically at rate $1/m$.
+  \item Each unit-iteration updates the $\phi$ and $\psi_u$ components of $\mu_m$.
+  \item $\mu_m = \big(\prod_{i = 1}^m\prod_{u = 1}^U A_{u, i}\big) \mu_0 = \big(\prod_{i = 1}^m P_m\big) \mu_0$, with $\|P_m\|_2 = 1 - \epsilon_m/m + o(1/m)$, with $\epsilon_m$ positive, bounded.
+\end{itemize}
+
 \end{frame}
 
 \end{document}

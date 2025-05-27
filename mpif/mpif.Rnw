@@ -510,12 +510,358 @@ ggplot(df_all_mu) +
 \begin{itemize}
   \item Gaussian priors + Gaussian likelihoods imply Gaussian posteriors.
   \item Transform data so likelihood is centered at zero.
-  \item The marginalization step only modifies the covariance, setting off-diagonal terms to zero.
+  \item The marginalization step only modifies the covariance, setting off-diagonal terms to zero. Conditions ensure this loss of information is not too large.
   \item Diagonals of covariance shrink to zero asymptotically at rate $1/m$.
   \item Each unit-iteration updates the $\phi$ and $\psi_u$ components of $\mu_m$.
   \item $\mu_m = \big(\prod_{i = 1}^m\prod_{u = 1}^U A_{u, i}\big) \mu_0 = \big(\prod_{i = 1}^m P_m\big) \mu_0$, with $\|P_m\|_2 = 1 - \epsilon_m/m + o(1/m)$, with $\epsilon_m$ positive, bounded.
 \end{itemize}
 
+\end{frame}
+
+\begin{frame}{Convergence with perturbations}
+
+    \begin{theorem}[Chapter 4, Corollary 1]
+    Considering the same setup as Theorem~2 (Chapter~4), if parameters are perturbed prior performing the Bayes update at each step using Gaussian additive noise with mean $0$ and covariance $\sigma^2_m\Sigma_0$, then if $\sigma_m^2 = o(1/m)$, then the algorithm still converges to the MLE as $m\rightarrow \infty$. 
+  \end{theorem}
+  
+  \begin{itemize}
+    \item This corollary is motivated by heuristic: a more dispersed prior typically results in a posterior distribution that more closely resembles the likelihood function.
+    \item Adding Gaussian noise at each step results in larger updates towards to MLE at each step.
+    \item Heuristically, convergence of unperturbed case implies convergence of perturbed case, if perturbation variance decreases to zero.
+  \end{itemize}
+
+\end{frame}
+
+\begin{frame}{The MPIF advantage: improved particle representation}
+
+  One perspective is that the marginalization adds a small amount of bias in each intermediate posterior distribution.
+  
+  \begin{itemize}
+    \item Theorem~2 (Chapter 4) gives formal conditions where the bias at each step is small enough that the combined iterations still converge to the MLE (no bias).
+    \item The advantage of MPIF, however, is improved particle representations. In this case, MPIF may still be preferable even if there is bias in final estimate.
+  \end{itemize}
+  
+\end{frame}
+
+\begin{frame}{Bias-Variance tradeoff}
+  
+<<fig.height=4.5, fig.width=5, out.width='0.65\\maxwidth'>>=
+set.seed(54321)
+N <- 100  # Number of observations  
+J <- 1000  # Number of particles
+
+like_mean <- 0  # Mean of the likelihood function
+like_var <- 1  # Variance of the likelihood function
+prior_mean <- c(2, 2)  # mean of the prior distribution
+prior_cov <- rbind(c(2, 0.5), c(0.5, 1))  # Covariance matrix of the prior
+
+Likelihood_Yi <- function(y_i, theta) {
+  dnorm(y_i, mean = theta)
+}
+
+# Simulate Data from likelihood model
+data_y <- rnorm(N, mean = like_mean, sd = sqrt(like_var))
+
+# Get particle representation of prior
+prior <- MASS::mvrnorm(
+  J,
+  mu = prior_mean, 
+  Sigma = prior_cov
+)
+
+# Marginals.
+prior1 <- prior[, 1]
+prior2 <- prior[, 2]
+
+# Keep track of how particle marginals change over time
+all_priors1 <- matrix(nrow = N + 1, ncol = J)
+all_priors2 <- matrix(nrow = N + 1, ncol = J)
+
+all_priors1[1, ] <- prior1
+all_priors2[1, ] <- prior2
+
+# Update particle distribution, one observation at a time. 
+for (i in 1:N) {
+  
+  prior1 <- rnorm(n = length(prior1), mean = prior1, sd = 0.02)  # small random noise
+  weights <- Likelihood_Yi(data_y[i], theta = prior1)
+  reg_weights <- weights / sum(weights)
+  prior1 <- prior1[sample(1:length(prior1), length(prior1), prob = reg_weights, replace = TRUE)]
+  prior2 <- prior2[sample(1:length(prior1), length(prior1), prob = reg_weights, replace = TRUE)]
+  
+  # Keep track of new particle distributions. 
+  all_priors1[i+1, ] <- prior1
+  all_priors2[i+1, ] <- prior2
+}
+
+# Convert to data.frame, for plotting. 
+all_priors1_df <- as.data.frame(all_priors1) %>% 
+  mutate(iteration = 0:N) %>% 
+  pivot_longer(-iteration, names_to = 'sample', values_to = 'val') %>% 
+  mutate(dist = '1')
+
+all_priors2_df <- as.data.frame(all_priors2) %>% 
+  mutate(iteration = 0:N) %>% 
+  pivot_longer(-iteration, names_to = 'sample', values_to = 'val') %>% 
+  mutate(dist = '2')
+
+all_priors <- dplyr::bind_rows(all_priors1_df, all_priors2_df)
+
+tmp <- all_priors %>% 
+  group_by(dist, iteration) %>% 
+  distinct(val) %>% ungroup()
+
+compute_posterior <- function(y, sigma2, mu0, Sigma0) {
+  # Ensure inputs are appropriate structures
+  if (!is.vector(y) || !is.numeric(y)) stop("y must be a numeric vector")
+  if (!is.matrix(Sigma0) || nrow(Sigma0) != 2 || ncol(Sigma0) != 2) stop("Sigma0 must be a 2x2 matrix")
+  if (length(mu0) != 2) stop("mu0 must be a vector of length 2")
+  
+  # Calculate some needed constants
+  N <- length(y)
+  y_sum <- sum(y)
+  
+  # Compute the inverse of Sigma0
+  Sigma0_inv <- solve(Sigma0)
+  
+  # Define the precision matrix of the likelihood part and prior part
+  likelihood_precision <- diag(c(N / sigma2, 0))
+  
+  # Compute the posterior precision matrix
+  posterior_precision <- likelihood_precision + Sigma0_inv
+  
+  # Compute the posterior covariance matrix (inverse of the precision matrix)
+  Sigma_n <- solve(posterior_precision)
+  
+  # Compute the posterior mean
+  b <- Sigma0_inv %*% mu0 + c(y_sum / sigma2, 0)
+  mu_n <- Sigma_n %*% b
+  
+  # Return a list containing the posterior mean and covariance matrix
+  list(mu_n = mu_n, Sigma_n = Sigma_n)
+}
+
+true_post <- compute_posterior(data_y, like_var, mu0 = prior_mean, Sigma0 = prior_cov)
+
+post_df <- data.frame(
+  dist = c('1', '2', '3'),
+  mean = c(true_post$mu_n[1], true_post$mu_n[2], true_post$mu_n[2]),
+  sd = c(sqrt(true_post$Sigma_n[1, 1]), sqrt(true_post$Sigma_n[2, 2]), sqrt(true_post$Sigma_n[2, 2]))
+)
+
+depParticlesPIF <- tmp %>% 
+  group_by(dist, iteration) %>% 
+  summarize(n = n_distinct(val)) %>% 
+  mutate(dist = factor(dist, levels = c('1', '2'), labels = c(TeX('$\\Psi_1$'), TeX('$\\Psi_2$'))))
+
+depParticlesMPIF <- depParticlesPIF %>% 
+  mutate(
+    n = case_when(dist == 'Psi[1]' ~ n, TRUE ~ max(n))
+  )
+
+depletion_1 <- depParticlesPIF %>% 
+  ggplot(aes(x = iteration, y = n)) + 
+  facet_wrap(
+    ~dist, nrow = 1, labeller = label_parsed
+  ) + 
+  geom_line(col = MARG_COLS[2]) +
+  geom_line(data = depParticlesMPIF, col = MARG_COLS[1], linetype = 'dashed') + 
+  theme_bw() + 
+  ylab("Number of\nUnique Particles") + 
+  xlab(TeX("Observation Number $(n \\in 1 : N_1)$"))
+
+final_prior <- data.frame(theta1 = prior1, theta2 = prior2)
+
+posterior_ellipse <- calculate_ellipse(t(true_post$mu_n), list(true_post$Sigma_n))
+
+final_prior$theta2_init <- all_priors2[1, ]
+
+final_prior_long <- pivot_longer(
+  data = final_prior, 
+  cols = c("theta2", "theta2_init"),
+  names_to = 'type',
+  values_to = 'theta2'
+)
+
+depletion_2 <- ggplot() + 
+  geom_point(data = final_prior_long, aes(x = theta1, y = theta2, col = type)) +
+  geom_path(data = posterior_ellipse, aes(x = X1, y = X2), linetype = 'dashed', col = 'black', linewidth = 1) + 
+  facet_wrap(~type, labeller = as_labeller(c(theta2 = "Unmarginalized", theta2_init = "Marginalized"))) + 
+  theme_bw() + 
+  ylab(TeX("$\\Psi_2$")) + 
+  xlab(TeX("$\\Psi_1$")) + 
+  theme(axis.title.y = element_text(margin = unit(c(0, 0.2, 0, 0.7), 'cm'))) + 
+  scale_color_manual(values = rev(MARG_COLS)) + 
+  theme(legend.position = 'none')
+
+cowplot::plot_grid(depletion_1, depletion_2, nrow = 2, labels = "AUTO", rel_heights = c(0.425, 0.575))
+@
+  
+\end{frame}
+
+\begin{frame}{Gompertz population model: high-dimensional space}
+
+The MPIF algorithm is demonstrated on data simulated from a stochastic population model. We have $U$ ranging from $5--2500$, and $N_u = N \in \{20, 50, 100\}$.
+\begin{itemize}
+  \item $X_{u, n+1} = K^{1- \exp{r_u}}_u \epsilon_{u, n}$, $\epsilon_{u, n} \sim N(0, \sigma^2_u)$. 
+  \item $Y_{u, n} | X_{u, n} \sim N\big(\log X_{u, n}, \tau^2_u\big)$
+  \item Fix $K_u = 1$, $X_{u, 0} = 1$. Estimate $\sigma_u^2 = \sigma^2 = 0.01$, $r_u = r = 0.1$, and $\tau_u^2 = 0.01$ for all $u$.  
+\end{itemize}
+
+This is log-linear Gaussian, so exact likelihood can be computed \citep{kalman60}. Parameter choices match \citet{breto20}. 
+
+\end{frame}
+
+\begin{frame}
+<<loadGompertz, echo=FALSE, include=FALSE>>=
+results0 <- readRDS("data/GompertzRL3.rds")
+results1 <- readRDS("data/GompertzBigUnitRL3.rds")
+results2 <- readRDS("data/GompertzHugeRL3.rds")
+
+resultsBig <- dplyr::bind_rows(results1, results2) %>% 
+  filter(N == 50)
+
+KF <- results0 %>%
+  filter(algorithm == "KF")
+
+IF <- results0 %>%
+  filter(algorithm == "IF")
+
+fct_orders <- paste(
+  rep(c("U = 5", "U = 15", "U = 50", "U = 100"), each = 4),
+  rep(c("N = 20", "N = 50", "N = 100", "N = 200"))
+)
+
+IF %>%
+  pivot_longer(
+    cols = starts_with("ll_"),
+    names_to = "iter",
+    values_to = "loglik",
+    names_prefix = "ll_"
+  ) %>%
+  mutate(
+    n_obs = paste0("N = ", N),
+    n_units = paste0("U = ", U)
+  ) -> IF_long
+
+KF_max <- KF %>%
+  filter(N == 50) %>% 
+  mutate(
+    n_obs = paste0("N = ", N),
+    n_units = paste0("U = ", U)
+  ) %>%
+  select(-COOLING_TYPE, -J, -M, -BLOCK, -COOLING, -(ll_2:ll_50)) %>%
+  rename(ll_max = ll_1) %>%
+  group_by(n_units, seed = data_seed) %>%
+  summarize(
+    ll_max = max(ll_max),
+    ll_min = min(ll_max)
+  ) %>% 
+  mutate(n_units = factor(n_units, levels = c('U = 5', 'U = 15', 'U = 50', 'U = 100')))
+
+
+fct_orders <- paste(
+  rep(c("U = 200", "U = 500", "U = 1000", "U = 2500"))
+)
+
+resultsBig %>%
+  pivot_longer(
+    cols = starts_with("ll_"),
+    names_to = "iter",
+    values_to = "loglik",
+    names_prefix = "ll_"
+  ) %>%
+  mutate(
+    n_obs = paste0("N = ", N),
+    n_units = paste0("U = ", U),
+    n_units = factor(n_units, levels = fct_orders)
+  ) -> IF_longBig
+
+IF_long_ntruth <- IF_longBig %>% 
+  filter(iter != 'truth') %>% 
+  mutate(iter = as.numeric(iter))
+
+IF_truth <- IF_longBig %>% 
+  filter(iter == 'truth') %>% 
+  select(-iter) %>% 
+  mutate(
+    n_units = factor(n_units, levels = fct_orders)
+  ) %>%
+  group_by(n_units) %>% 
+  distinct(loglik)
+@
+
+<<gompFig1, fig.height=4>>=
+gg_smallU <- IF_long %>%
+  filter(J == 1000) %>%
+  filter(N == 50) %>%
+  group_by(iter, BLOCK, n_units) %>%
+  summarize(
+    min = quantile(loglik, 0.10),
+    # min = min(loglik), 
+    median = median(loglik),
+    logmeanexp = logmeanexp(loglik),
+    mean = mean(loglik),
+    max = max(loglik)
+  ) %>%
+  mutate(
+    iter = as.numeric(iter),
+    BLOCK = factor(BLOCK, levels = c(TRUE, FALSE)),
+    n_units = factor(n_units, levels = c('U = 5', 'U = 15', 'U = 50', 'U = 100'))
+  ) %>%
+  filter(iter > 0) %>%
+  ggplot(aes(x = iter, col = BLOCK)) +
+  geom_line(aes(y = max)) +
+  geom_segment(aes(y = min, yend = max, xend = iter)) +
+  facet_wrap(~n_units, scales = 'free', nrow = 1) +
+  theme_bw() +
+  geom_hline(data = KF_max, aes(yintercept = ll_max), linetype = 'solid') +
+  ylab("log-likelihood") +
+  theme(axis.text = element_text(size = 6), legend.position = 'none', axis.title.x = element_blank()) +
+  scale_color_manual(name = 'Marginalized', values = MARG_COLS)
+
+gg_bigU <- IF_long_ntruth %>%
+  filter(J == 1000) %>%
+  filter(N == 50) %>% 
+  mutate(n_units = factor(n_units, levels = fct_orders)) %>%
+  group_by(iter, BLOCK, n_units) %>%
+  summarize(
+    min = quantile(loglik, 0.10),
+    median = median(loglik),
+    logmeanexp = logmeanexp(loglik),
+    mean = mean(loglik),
+    max = max(loglik)
+  ) %>%
+  mutate(
+    BLOCK = factor(BLOCK, levels = c(TRUE, FALSE))
+  ) %>%
+  filter(iter > 0) %>%
+  ggplot(aes(x = iter, col = BLOCK)) +
+  geom_line(aes(y = max)) +
+  geom_segment(aes(y = min, yend = max, xend = iter)) +
+  facet_wrap(~n_units, scales = 'free', nrow = 1) +
+  theme_bw() +
+  geom_hline(data = IF_truth, aes(yintercept = loglik), linetype = 'dashed') +
+  ylab("log-likelihood") +
+  xlab("Iteration number (m)") +
+  theme(axis.text = element_text(size = 6), legend.position = 'bottom') +
+  scale_color_manual(name = 'Marginalized', values = MARG_COLS)
+
+cowplot::plot_grid(gg_smallU, gg_bigU, nrow = 2, rel_heights = c(0.4, 0.6))
+@
+\end{frame}
+
+\begin{frame}{Discussion}
+  \begin{itemize}
+    \item In all tested models, the MPIF algorithm outperforms PIF, especially as the number of units $U$ is large, and number of unit-specific parameters is large.
+    \item Even poor performing replicates of MPIF often outperform PIF, despite having weaker theoretical guarantees.
+    \item Improved performance is a result of reduced particle depletion.
+    \item Stronger theory for MPIF is available in some special cases, each covered by Theorem~1 of Chapter~4:
+    \begin{itemize}
+      \item No shared parameters: there is no parameter dependence, and the algorithm is equivalent to performing IF2 independently to each model. 
+      \item No unit-specific parameters: the algorithm is the same as PIF, as resampling unit-specific parameters is not needed.
+    \end{itemize}
+  \end{itemize}
 \end{frame}
 
 \end{document}

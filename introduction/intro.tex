@@ -82,7 +82,7 @@ There are several terms that have been used as synonyms with state space models 
   \item Partially observed Markov process (POMP) model
 \end{itemize}
 
-I chose SSM as it is the terminology often preferred by practitioners.
+I chose SSM as it is the terminology that potential collaborators are most familiar with.
 \end{frame}
 
 \begin{frame}{State Space Models (SSM)}
@@ -142,7 +142,7 @@ f_{\bm{X}_{0:N}, \bm{Y}_{1:N}}\big(\bm{x}_{0:N}, \bm{y}_{1:N};\, \paramVec\big) 
 \caption{\label{fig:pompDiagram}A flow diagram representing an arbitrary POMP model. Modified figure from SBIED course (King, Ionides).}
 \end{figure}
 
-\alert{Each of the SSMs considered in this thesis are POMP models.}
+Each of the SSMs considered in this thesis are POMP models.
 
 \end{frame}
 
@@ -161,8 +161,17 @@ f_{\bm{X}_{0:N}, \bm{Y}_{1:N}}\big(\bm{x}_{0:N}, \bm{y}_{1:N};\, \paramVec\big) 
 \begin{frame}{Remaining Chapters and Outline}
   \begin{itemize}
     \item Inference for ARMA models.
+      \begin{itemize}
+        \item ARMA models are a special type of linear Gaussian SSMs, and are an important part of modern science. 
+      \end{itemize}
     \item Mechanistic models for modeling cholera outbreak in Haiti.
+      \begin{itemize}
+        \item This case study discusses the strengths and weaknesses of using mechanistic models to inform government policy, using a retrospective analysis of the 2010-2019 cholera oubreak in Haiti.
+      \end{itemize}
     \item The marginalized panel iterated filter (MPIF) algorithm.
+    \begin{itemize}
+      \item This chapter proposes a new inference algorithm for a large collection of related POMP models, called a PanelPOMP. Some novel theory for existing algorithms for these models is also presented.
+    \end{itemize}
   \end{itemize}
 \end{frame}
 

@@ -1,0 +1,101 @@
+\documentclass[aspectratio=169]{beamer}
+\usetheme{gotham}
+
+   \usepackage{appendixnumberbeamer}
+   \usepackage[scale=2]{ccicons}
+   \newcommand{\themename}{\textbf{\textsc{Gotham}}}
+
+
+\begin{document}
+
+\section{Conclusion and future directions}
+
+  \begin{frame}{Summary}
+    Likelihood based inference of SSMs is a challenging task. This thesis presents novel research related to various aspects of this problem:
+    \begin{itemize}
+      \item Chapter~2 proposes new \alert{methodology} for ARIMA models, perhaps the most used type of SSM. It demonstrates existing algorithms fail to properly maximize likelihoods, and fixes this with limited additional computational effort. 
+      \item Chapter~3 is an \alert{application} that proposes new standards for using mechanistic models to inform policy. It demonstrates some strengths and weaknesses of existing approaches, and how recent methodological advances can be used to aid this task. 
+      \item Chapter~4 proposes new \alert{methodology} to help perform maximum likelihood estimation for high-dimensional panel models, and provides \alert{theory} for the proposed approach in special cases. It also extends existing theory for iterating filtering on panel models.
+    \end{itemize}
+  \end{frame}
+
+  \begin{frame}{Future Directions: Chapter 2}
+    The importance of ARIMA models to modern science additional developments related to this chapter may be worth the effort. Particularly well-suited for an undergraduate research project(s): 
+    \begin{itemize}
+      \item Building a Python library to implement the existing algorithm. 
+      \item Consider stratified sampling of root initializations (i.e., sample from each quadrant rather than randomly).
+      \item Develop theoretical bounds on the number of local optima, resulting in improved stopping criteria.
+      \item Leveraging iterated filtering to do non-Gaussian ARMA models and/or in panel models.
+    \end{itemize}
+  \end{frame}
+  
+  \begin{frame}{Future Directions: Chapter 3}
+    The lessons learned from this retrospective analysis may be relevant in other disciplines.
+    Additionally, there are a number of things I learned that didn't make the final paper: 
+    \begin{itemize}
+      \item The importance of initialization and measurement models. These are often overlooked, but are key to fitting insightful models.
+      \item Uncertainty propagation: the natural approach is perform Monte Carlo adjusted profile confidence intervals \citep{ionides17}, giving a large number of parameter values, and sample these using their likelihoods (Empirical Bayes). If dimensions are high, the Monte Carlo variance is high, so you don't get to resample many parameters this way. 
+    \end{itemize}
+  \end{frame}
+  
+  \begin{frame}{Future Directions: Chapter 4}
+    The theory developed for both PIF and MPIF gives rise to a few extensions: 
+    \begin{itemize}
+      \item Current theory for MPIF ignores particle approximations, and is limited to Gaussian densities.
+      \item Nested levels of shared and unit-specific parameters. This is particularly useful for performing inference on nested designed experiments, or designed experiments that may have global shared parameters, shared parameters for each experimental treatment, and unit-specific parameters for each experimental replicate.
+    \end{itemize}
+  \end{frame}
+    
+    \begin{frame}{Future Directions: General}
+      Parameter perturbations introduced in IF result in loss-of-information. Recent work in automatic differentiation can help avoid this issue, though appears to require IF-algorithms to initialize \citep{tan24}. MPIF can be particularly useful for this algorithm in panel settings. Related to this extension: 
+      \begin{itemize}
+        \item Software for panel models with auto-diff (pypomp, work ongoing with other students).
+        \item Using methodology to build shallow neural networks to model unknown mechanisms \citep[e.g.,][]{noordijk24}. 
+      \end{itemize}
+  \end{frame}
+
+    \begin{frame}{Future Directions: Applications}
+      My interest in methodology in SSMs is in part driven by my interest in the types of problems they solve. Some potential applications include: 
+      \begin{itemize}
+        \item Fisheries; long history of SSM, but particle filter / IF approach hasn't caught on. Interesting to know if this approach is useful in fisheries, or if there are lessons there to be learned.
+        \begin{itemize}
+          \item Concrete examples include: modeling disease progression in native cutthroat species, modeling reproductive dynamics of native cutthroat with stocked rainbow trouts (threatening native reproduction) \citep{rosenthal22}.
+        \end{itemize}
+        \item Disease progression in farms: plants and livestock \citep{skolstrup22}.
+      \end{itemize}
+  \end{frame}
+  
+  \begin{frame}{Acknowledgements}
+    There are so many people that I would like to thank, impossible to thank everyone who has helped and supported me.
+    
+    I would like to give a special thanks to my advisor (Edward L. Ionides), dissertation committee (Aaron A. King, Kerby Shedden, Jeffery Regier), my family, classmates, and friends.
+  \end{frame}
+
+	% % FRAME
+	% \begin{frame}{Summary}
+	% 	Get the source of this theme and the demo presentation from
+	% 
+	% 	\begin{center}\url{https://gitlab.com/RomainNOEL/beamertheme-gotham}\end{center}
+	% 
+	% 	The theme \emph{itself} is licensed under a \href{http://creativecommons.org/licenses/by-sa/4.0/}{Creative Commons Attribution-ShareAlike 4.0 International License}.
+	% 	\begin{center} \ccbysa \end{center}
+	% \end{frame}
+
+% 	% FRAME
+%    \begin{standoutenv}
+%    \begin{frame}[fragile]
+%       The final slide using the standout style with command:
+% 		\begin{verbatim}
+% 			\begin{frame}[standout, plain]{Thank You !}
+% 				Questions ?
+% 		 	\end{frame }
+% 		\end{verbatim}
+% 
+% 		\begin{center}
+% 			Et voilà !
+% 		\end{center}
+%    \end{frame}
+%    \end{standoutenv}
+	
+\end{document}
+

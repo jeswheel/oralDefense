@@ -11,3 +11,5 @@
 *concordance.tex
 *.snm
 _minted/
+*/*.pdf
+*/figure/*

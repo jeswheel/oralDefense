@@ -165,7 +165,7 @@ If we let $m\rightarrow \infty$, the effect of the initial prior distribution di
   \end{itemize}
 \end{frame}
 
-\begin{frame}{Iterated filtering for panel models}
+\begin{frame}{PIF: a tradeoff}
   Iterated filtering takes data one observation at a time. 
   In the panel setting, this means we process by unit $u$. 
   Ignoring perturbations, the algorithm iterates over $(m, u)$: 
@@ -231,12 +231,91 @@ If we let $m\rightarrow \infty$, the effect of the initial prior distribution di
 \begin{itemize}
   \item Gaussian priors + Gaussian likelihoods imply Gaussian posteriors.
   \item Transform data so likelihood is centered at zero.
-  \item The marginalization step only modifies the covariance, setting off-diagonal terms to zero.
+  \item The marginalization step only modifies the covariance, setting off-diagonal terms to zero. Conditions ensure this loss of information is not too large.
   \item Diagonals of covariance shrink to zero asymptotically at rate $1/m$.
   \item Each unit-iteration updates the $\phi$ and $\psi_u$ components of $\mu_m$.
   \item $\mu_m = \big(\prod_{i = 1}^m\prod_{u = 1}^U A_{u, i}\big) \mu_0 = \big(\prod_{i = 1}^m P_m\big) \mu_0$, with $\|P_m\|_2 = 1 - \epsilon_m/m + o(1/m)$, with $\epsilon_m$ positive, bounded.
 \end{itemize}
 
+\end{frame}
+
+\begin{frame}{Convergence with perturbations}
+
+    \begin{theorem}[Chapter 4, Corollary 1]
+    Considering the same setup as Theorem~2 (Chapter~4), if parameters are perturbed prior performing the Bayes update at each step using Gaussian additive noise with mean $0$ and covariance $\sigma^2_m\Sigma_0$, then if $\sigma_m^2 = o(1/m)$, then the algorithm still converges to the MLE as $m\rightarrow \infty$. 
+  \end{theorem}
+  
+  \begin{itemize}
+    \item This corollary is motivated by heuristic: a more dispersed prior typically results in a posterior distribution that more closely resembles the likelihood function.
+    \item Adding Gaussian noise at each step results in larger updates towards to MLE at each step.
+    \item Heuristically, convergence of unperturbed case implies convergence of perturbed case, if perturbation variance decreases to zero.
+  \end{itemize}
+
+\end{frame}
+
+\begin{frame}{The MPIF advantage: improved particle representation}
+
+  One perspective is that the marginalization adds a small amount of bias in each intermediate posterior distribution.
+  
+  \begin{itemize}
+    \item Theorem~2 (Chapter 4) gives formal conditions where the bias at each step is small enough that the combined iterations still converge to the MLE (no bias).
+    \item The advantage of MPIF, however, is improved particle representations. In this case, MPIF may still be preferable even if there is bias in final estimate.
+  \end{itemize}
+  
+\end{frame}
+
+\begin{frame}{Bias-Variance tradeoff}
+  
+\begin{knitrout}
+\definecolor{shadecolor}{rgb}{0.969, 0.969, 0.969}\color{fgcolor}
+
+{\centering \includegraphics[width=0.65\maxwidth]{figure/unnamed-chunk-1-1} 
+
+}
+
+
+\end{knitrout}
+  
+\end{frame}
+
+\begin{frame}{Gompertz population model: high-dimensional space}
+
+The MPIF algorithm is demonstrated on data simulated from a stochastic population model. We have $U$ ranging from $5--2500$, and $N_u = N \in \{20, 50, 100\}$.
+\begin{itemize}
+  \item $X_{u, n+1} = K^{1- \exp{r_u}}_u \epsilon_{u, n}$, $\epsilon_{u, n} \sim N(0, \sigma^2_u)$. 
+  \item $Y_{u, n} | X_{u, n} \sim N\big(\log X_{u, n}, \tau^2_u\big)$
+  \item Fix $K_u = 1$, $X_{u, 0} = 1$. Estimate $\sigma_u^2 = \sigma^2 = 0.01$, $r_u = r = 0.1$, and $\tau_u^2 = 0.01$ for all $u$.  
+\end{itemize}
+
+This is log-linear Gaussian, so exact likelihood can be computed \citep{kalman60}. Parameter choices match \citet{breto20}. 
+
+\end{frame}
+
+\begin{frame}
+
+
+\begin{knitrout}
+\definecolor{shadecolor}{rgb}{0.969, 0.969, 0.969}\color{fgcolor}
+
+{\centering \includegraphics[width=\maxwidth]{figure/gompFig1-1} 
+
+}
+
+
+\end{knitrout}
+\end{frame}
+
+\begin{frame}{Discussion}
+  \begin{itemize}
+    \item In all tested models, the MPIF algorithm outperforms PIF, especially as the number of units $U$ is large, and number of unit-specific parameters is large.
+    \item Even poor performing replicates of MPIF often outperform PIF, despite having weaker theoretical guarantees.
+    \item Improved performance is a result of reduced particle depletion.
+    \item Stronger theory for MPIF is available in some special cases, each covered by Theorem~1 of Chapter~4:
+    \begin{itemize}
+      \item No shared parameters: there is no parameter dependence, and the algorithm is equivalent to performing IF2 independently to each model. 
+      \item No unit-specific parameters: the algorithm is the same as PIF, as resampling unit-specific parameters is not needed.
+    \end{itemize}
+  \end{itemize}
 \end{frame}
 
 \end{document}

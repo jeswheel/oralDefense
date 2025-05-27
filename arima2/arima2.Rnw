@@ -62,8 +62,8 @@ root <- ""
 \phi_r & 0 & \ldots & & 0
 \end{pmatrix} \in \R^{r \times r}, \quad\quad
 Q = \begin{pmatrix}
-  1 \\ \MApar_1 \\ \vdots \\ \MApar_{r - 1} \in \R^r
-\end{pmatrix}
+  1 \\ \MApar_1 \\ \vdots \\ \MApar_{r - 1}
+\end{pmatrix} \in \R^r
   \end{equation*}
 
 We can then recover the ARMA model using the following state space formulation:

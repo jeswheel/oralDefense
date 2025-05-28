@@ -5,7 +5,7 @@ TEXFILES = $(wildcard */*.tex)
 
 # Directories containing Rnw files
 CHAPTER_DIRS = introduction conclusion arima2 haiti mpif
-INPUT_FILES = header.tex
+INPUT_FILES = header.tex references.bib
 
 # Create lists of .Rnw and corresponding .tex files
 RNW_FILES := $(wildcard $(foreach dir,$(CHAPTER_DIRS),$(dir)/*.Rnw))

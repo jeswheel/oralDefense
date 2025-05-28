@@ -28,7 +28,7 @@ root <- ""
 
 \begin{frame}{Auto-regressive moving average (ARMA) models}
   ARMA models are the most frequently used approach to modeling time series data.
-  ARMA models are as foundational to time series analysis as linear models are to regression analysis, and they are often used in conjunction for regression with ARMA errors.
+  % ARMA models are as foundational to time series analysis as linear models are to regression analysis, and they are often used in conjunction for regression with ARMA errors.
   
   \begin{block}{ARMA model definition}
     A time series $Y_{1:N}$ is called ARMA$(p, q)$ if it is (weakly) stationary and
@@ -38,12 +38,11 @@ root <- ""
     with $\{w_n; n = 0, \pm1, \pm2, \ldots\}$ denoting a mean zero white noise (WN) processes with variance $\sigma_w^2 > 0$, and $\phi_p \neq 0$, $\MApar_q \neq 0$.
   \end{block}
   
-  We refer to the positive integers $p$ and $q$ of Eq.~\myeqref{eq:arma} as the autoregressive (AR) and moving average (MA) orders, respectively.
+  $p$ and $q$ of Eq.~\myeqref{eq:arma} as the autoregressive (AR) and moving average (MA) orders, respectively.
 \end{frame}
 
 \begin{frame}[allowframebreaks]{State space formulation}
-  For practitioners, ARMA models do not appear to be SSMs.
-  However, inference methodology treats ARMA models as \emph{non-mechanistic} SMMs. Let $r = \max(p, q+1)$, and we now define
+  How are they relevant? Inference methodology treats ARMA models as \emph{non-mechanistic} SMMs. Let $r = \max(p, q+1)$, and assume $w_n \overset{\mathrm{iid}}{\sim} N(0, \sigma^2_w)$. Define
   \begin{equation*}
     X_n = \begin{pmatrix}
   Y_n \\
@@ -82,15 +81,18 @@ This approach has been the standard method for fitting ARIMA models since the ea
 \end{frame}
 
 \begin{frame}{Optimization Shortcomings}
-This existing approach frequently results in sub-optimal parameter estimates.
-To demonstrate this, we fit an ARMA$(2, 2)$ and an ARMA$(2, 1)$ model to data generated from an ARMA$(2, 2)$ model. 
-The ARMA$(2, 1)$ is formally a special case of an ARMA$(2, 2)$ model, with $\MApar_2 = 0$. 
-
-In \code{R}, we draw a single instance from Model class 2: $y^*_{1:100} \sim \mathrm{ARMA}(2, 2)$ with: 
+\setbeamercovered{transparent}
+This existing approach frequently results in sub-optimal parameter estimates. Simple example in \code{R}: 
 \begin{itemize}
-  \item $(\phi_1, \phi_2, \MApar_1, \MApar_2) = (0.2, -0.1, 0.4, 0.2)$
+  \item Generate data from an $\mathrm{ARMA}(2, 2)$ model.
+  \item Fit both $\mathrm{ARMA}(2, 1)$ and $\mathrm{ARMA}(2, 2)$ models to simulated data.
+\end{itemize}
+The $\mathrm{ARMA}(2, 1)$ is formally a special case of an $\mathrm{ARMA}(2, 2)$ model, with $\MApar_2 = 0$. \pause
+Simulation details: 
+\begin{itemize}
+  \item $(\phi_1, \phi_2, \MApar_1, \MApar_2) = (0.2, -0.1, 0.4, 0.2)$.
   \item $w_n \overset{\text{iid}}{\sim} N(0, 1)$. 
-  \item Intercept $\mu = 13$ so that $E[Y_n] \neq 0$.
+  \item $N = 100$ observations with intercept $\mu = 13$ so that $E[Y_n] \neq 0$.
 \end{itemize}
 
 <<armaSeed, echo=FALSE,include=FALSE,comment=FALSE>>=
@@ -115,11 +117,11 @@ mod2 <- stats::arima(y, order = c(2, 0, 2))
 @
 
 \pause 
-The likelihood of \code{mod1} is \Sexpr{round(mod1$loglik, 1)}, and the likelihood of \code{mod2} is \Sexpr{round(mod2$loglik, 1)}. The \alert{smaller} model has a log-likelihood that is \Sexpr{round(mod1$loglik - mod2$loglik, 1)} units \alert{higher} than the larger model, which is mathematically impossible under proper optimization. 
+The likelihood of \code{mod1} is \Sexpr{round(mod1$loglik, 1)}, and the likelihood of \code{mod2} is \Sexpr{round(mod2$loglik, 1)}. The \alert{smaller} model has a log-likelihood that is \Sexpr{round(mod1$loglik - mod2$loglik, 1)} units \alert{higher} than the larger model, which is mathematically impossible under proper optimization (could estimate $\hat{\MApar}_2 = 0$).
 \end{frame}
 
 \begin{frame}{Convergence to local optima}
-  The difficulty is that the likelihood surface is often multimodal, and the existing procedure runs the risk of converging to a local solution \citep{ripley2002}.
+  Why? Likelihood surface is often multimodal, and existing procedures run the risk of converging to a local solution \citep{ripley2002}. Example $\mathrm{MA}(1)$ profiles:
 
 <<MultiModeSetup, echo=FALSE>>=
 sample_data <- function(data, job, n, P, Q, ...) {
@@ -273,12 +275,12 @@ for (j in 1:length(job_ids)) {
       "truth" = "longdash",
       "est" = "solid",
       "init" = "dashed"
-    ), labels = c("truth" = 'Truth', "est" = "Estimate", "init" = 'CSS Initialization')
+    ), labels = c("truth" = 'Truth', "est" = "Estimate", "init" = TeX('$\\varphi_1$ Initialization'))
   ) +
   scale_color_manual(
     name = NULL,
     values = setNames(c("red", "black", "blue"), c("truth", "est", 'init')),
-    labels = c("truth" = 'Truth', "est" = "Estimate", "init" = 'CSS Initialization')
+    labels = c("truth" = 'Truth', "est" = "Estimate", "init" = TeX('$\\varphi_1$ Initialization'))
     # labels = setNames(c("arima2::arima", "stats::arima"), c("est1", "est2"))
   ) +
   # guides(
@@ -316,13 +318,14 @@ ggpubr::ggarrange(
 
 \begin{frame}{Multiple parameter initializations}
 \setbeamercovered{transparent}
-  In other contexts with multi-model loss functions, the optimization is often repeated using multiple initializations. 
-  However, I have seen \alert{no instances} of this for ARIMA models. There are a few challenges: 
+  In other contexts with multi-model loss functions, the optimization is often repeated using multiple initializations.
+  
+  However, I have seen \alert{no instances} of this for $\mathrm{ARIMA}$ models. There are a few challenges: 
   \begin{itemize}
     \item Most users don't know about the possibility of converging to local solutions. 
-    \item Their are complex constraints of possible initialization. 
+    \item Their are complex constraints on parameter initializations. 
     \begin{itemize}
-      \item Constraints are on the roots of polynomials formed by model parameters, not directly on parameters themselves.
+      \item Constraints are on the roots of polynomials formed by model parameters, not directly on parameters themselves; transformations not readily available.
     \end{itemize}
   \end{itemize}
   \pause
@@ -330,7 +333,11 @@ ggpubr::ggarrange(
 \end{frame}
 
 \begin{frame}
-  For parameters to be real, the roots need to be sampled as real or conjugate pairs. We cannot sample all roots as conjugate pairs (or real), as this would result in specific parameters being all one sign. Our approach for each root is the following:
+  For parameters to be real, the roots need to be sampled as real or conjugate pairs. 
+  
+  We cannot sample all roots as conjugate pairs (or real), as this would result in specific parameters being all one sign. 
+  
+  Our approach for each root is the following:
   \begin{itemize}
     \item Sample inverted-root magnitudes uniformly $U(\gamma, 1-\gamma)$.
     \item With probability $p = \sqrt{1/2}$, sample inverted-root pairs as real.
@@ -346,7 +353,8 @@ ggpubr::ggarrange(
 \begin{frame}{Revisiting toy example}
 \setbeamercovered{transparent}
 
-Now we'll fit the exact same models using the \code{arima2} package:
+Algorithm allows for minimal changes to user interface.
+Using the same data, models fit using the \code{arima2} package:
 
 <<ARMAsetSeed2, echo=FALSE>>=
 set.seed(746168)
@@ -358,7 +366,7 @@ mod1v2 <- arima2::arima(y, order = c(2, 0, 1))
 mod2v2 <- arima2::arima(y, order = c(2, 0, 2))
 @
 
-With this new algorithm and software, the likelihood of \code{mod1v2} is \Sexpr{round(mod1v2$loglik, 1)}, and the likelihood of \code{mod2v2} is \Sexpr{round(mod2v2$loglik, 1)}.
+With this new algorithm and software, the likelihood of \code{mod1v2} is \Sexpr{round(mod1v2$loglik, 3)}, and the likelihood of \code{mod2v2} is \Sexpr{round(mod2v2$loglik, 3)}.
 
 \pause
 The likelihood of the smaller model was unchanged, but the larger model had an increase in log-likelihood of \Sexpr{round(mod2v2$loglik - mod2$loglik, 1)}. The likelihoods of the nested models are now \alert{consistent}.
@@ -366,11 +374,11 @@ The likelihood of the smaller model was unchanged, but the larger model had an i
 
 \begin{frame}{Summary}
 \setbeamercovered{transparent}
-ARMA models are not necessarily state-of-the art statistical models. Why does this project matter?
+$\mathrm{ARMA}$ models are not necessarily state-of-the art. Why should we care?
   \begin{itemize}
-    \item ARMA models are among the most frequently used approaches in all of statistics, so even small improvements are worth the effort.\pause
+    \item $\mathrm{ARMA}$ models are among the most frequently used approaches in all of statistics, so even small improvements are worth the effort.\pause
     \item Software that claims to maximize model likelihoods fails to do so in a large number of cases ($>20\%$).\pause
-    \item ARMA models are often used in conjunction with linear regression. Likelihood ratio tests are common for testing the inclusion / significance of regression parameters.\pause
+    \item $\mathrm{ARMA}$ models are often used in conjunction with linear regression. Likelihood ratio tests are common for testing the inclusion / significance of regression parameters.\pause
     \begin{itemize}
       \item Typical improvements in log-likelihood in the range $(0.22, 1.46)$. This shortcoming in one or both model is large enough to change the outcome of these tests.\pause
     \end{itemize}

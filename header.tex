@@ -52,3 +52,58 @@
 \newcommand\reportChange{\delta}
 
 \usepackage{pict2e}
+
+% \defbeamertemplate{title~page}{jesse~normal}{
+% 	\ifx\insertframetitle\@empty\else\vspace*{-3em}\fi
+% 	\begin{picture}(0,0)		
+% 		% The text: title, author, institute, etc.
+% 		\put(-30,-125){\noindent
+% 			\fcolorbox{normal~text.bg}{normal~text.bg}{
+% 			\begin{minipage}[b][\paperheight]{\paperwidth}
+% 				\parbox[c][0pt][c]{0pt}{\gothamtitlepagebg} 
+% 				\centering
+% 				\vfill
+% 				\ifx\inserttitle\@empty\else
+% 					\parbox{0.9\textwidth}{\centering
+% 						\usebeamertemplate*{title}
+% 					}\\[1.ex]
+% 				\fi
+% 				\ifx\insertsubtitle\@empty\else
+% 					\parbox{0.9\textwidth}{\centering
+% 						\usebeamertemplate*{subtitle}
+% 					}\\[2.ex]
+% 				\fi
+% 				% \hspace*{-0pt}
+% 				\usebeamertemplate*{title~separator}
+% 				% from above patch
+% 				\expandafter\ifblank\expandafter{\beamer@andstripped}{
+% 					% empty author
+% 					\vspace*{1.em}
+% 				}{
+% 					\usebeamertemplate*{author}
+% 				}
+% 				% \ifx\insertauthor\empty Empty~Author\else TT \fi
+% 				\ifx\insertdate\@empty\else\usebeamertemplate*{date}\fi
+% 				\ifx\insertinstitute\@empty\else{\parbox{0.9\textwidth}{\raggedright\usebeamertemplate*{institute}} }\fi
+% 				\vfill
+% 				\vbox{}
+% 			\end{minipage}
+% 			}
+% 			% end third argument of fcolorobx
+% 		}
+% 		
+% 		% the institute logo on title page
+% 		% \put(275,-120){
+% 		% 	\gothamtitlepagelogo
+% 		% }
+% 		
+% 		% the extra logos on title page (\inserttitlegraphic)
+% 		\put(-27,-123){
+% 			\noindent\vbox{
+% 				\begin{minipage}[b][0.96\paperheight]{0.899\textwidth}
+% 				\ifx\inserttitlegraphic\@empty\else\usebeamertemplate*{title~graphic}\fi
+% 				\end{minipage}
+% 			}
+% 		}
+% 	\end{picture}
+% }

@@ -8,7 +8,7 @@
 
 \begin{document}
 
-\section{Conclusion and future directions}
+\section{Conclusion and Future Directions}
 
   \begin{frame}{Summary}
     Likelihood based inference of SSMs is a challenging task. This thesis presents novel research related to various aspects of this problem:
@@ -42,12 +42,23 @@
     The theory developed for both PIF and MPIF gives rise to a few extensions: 
     \begin{itemize}
       \item Current theory for MPIF ignores particle approximations, and is limited to Gaussian densities.
-      \item Nested levels of shared and unit-specific parameters. This is particularly useful for performing inference on nested designed experiments, or designed experiments that may have global shared parameters, shared parameters for each experimental treatment, and unit-specific parameters for each experimental replicate.
+      \item Can Gaussian bias be bounded? Bias negated via perturbations?
+      \item Nested levels of shared and unit-specific parameters. 
+      % This is particularly useful for performing inference on nested designed experiments, or designed experiments that may have global shared parameters, shared parameters for each experimental treatment, and unit-specific parameters for each experimental replicate.
     \end{itemize}
+    
+    \begin{figure}[h!]
+    \centering
+    \includegraphics[width=0.7\maxwidth]{conclusion/nestedDesign.pdf}
+    \caption[A diagram of a controlled experiment with replications.]{A diagram of a controlled experiment with replications.}
+    \label{fig:controlled_experiment}
+\end{figure}
   \end{frame}
     
     \begin{frame}{Future Directions: General}
-      Parameter perturbations introduced in IF result in loss-of-information. Recent work in automatic differentiation can help avoid this issue, though appears to require IF-algorithms to initialize \citep{tan24}. MPIF can be particularly useful for this algorithm in panel settings. Related to this extension: 
+      Parameter perturbations introduced in IF result in loss-of-information. Recent work in automatic differentiation can help avoid this issue, though appears to require IF-algorithms to initialize \citep{tan24}. 
+      
+      MPIF can be particularly useful for this algorithm in panel settings. Related to this extension: 
       \begin{itemize}
         \item Software for panel models with auto-diff (pypomp, work ongoing with other students).
         \item Using methodology to build shallow neural networks to model unknown mechanisms \citep[e.g.,][]{noordijk24}. 

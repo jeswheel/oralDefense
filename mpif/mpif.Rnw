@@ -225,7 +225,7 @@ GG_PMDC <- function(Lambda, Prior, M, init_noise = 1/4) {
 Often we have a collection of related time series called, called \emph{panel data}.
 We want to make inference using the entire collection, not just on each time series.
 
-Examples
+Examples:
   \begin{itemize}
     \item Model for disease outbreaks of the same disease, different locations (hospitals / cities) \citep{lee20}.
     \item Experiments / observational studies on ecological populations \citep{searle16}.
@@ -247,23 +247,31 @@ Examples
   $$
   
   The parameter vector $\theta$ has shared components $\phi$, and unit specific components $\psi_{1:U}$.
-  $$\theta = (\phi, \psi_{1:U})$$.
+  $$\theta = (\phi, \psi_{1:U})$$
   
 \end{frame}
 
 \begin{frame}{The problem}
 
+  Independent models, why not do inference independently? 
+
   \begin{itemize}
-    \item Particle filters work in low-dimensions, can be applied independently to units.
-    \item Iterated filtering (IF) is an extension used to perform maximum likelihood estimation \citep{ionides15}.
-    \item IF introduces dependence because of shared $\theta$, making it a high-dimensional problem. 
+    \item Each model may share features (or parameters), and we want to estimate using all of the data. 
+  \end{itemize}
+  Common inference procedures in low dimensions rely on particle filters \citep{arulampalam02}.
+  \begin{itemize}
+    \item[{\color{green} $\checkmark$}] Particle filters work in low-dimensions, can be applied independently to units.
+    \item[{\color{red} $X$}] Iterated filtering (IF) is an extension used to perform maximum likelihood estimation \citep{ionides15}.
+    \begin{itemize}
+      \item IF introduces dependence because of shared $\theta$, making it a high-dimensional problem.
+    \end{itemize}
   \end{itemize}
 
 \end{frame}
 
 \begin{frame}{Background: Data cloning and iterated filtering}
   
-  IF is a special type of Data cloning \citep{lele07}, which is repeated applications of Bayes rule. 
+  IF is a special type of Data cloning \citep{lele07}. 
   
   Denote $\pi_i(\theta)$ as the posterior distribution of the parameter vector $\theta$ after the $i$th Bayesian update, and $\mathcal{L}(\paramVec; \bm{y}^*)$ as the likelihood
 \begin{align*}
@@ -277,15 +285,16 @@ If we let $m\rightarrow \infty$, the effect of the initial prior distribution di
 \end{frame}
 
 \begin{frame}{Iterated filtering}
+\setbeamercovered{transparent}
   Loosely speaking, iterated filtering is just data cloning with the additional pieces: 
   \begin{enumerate}
     \item Likelihood cannot be evaluated exactly, it's approximated using particle filters. 
     \item At each time-step, the parameter particles are perturbed.
     \item Parameter particles reweighted using conditional log-likelihoods.
-  \end{enumerate}
-  The perturbation of parameters is necessary to avoid particle depletion, a known problem with particle filters + Bayesian inference \citep{chen24}.
+  \end{enumerate}\pause
+  {\color{green} $\checkmark$} The perturbation of parameters is necessary to avoid particle depletion, a known problem with particle filters + Bayesian inference \citep{chen24}.
   
-  The perturbations introduce a loss of information \citep{liu01}, so are decreased over the cloning iteration.
+  {\color{red} $X$} The perturbations introduce a loss of information \citep{liu01}, so are decreased over the cloning iteration.
 \end{frame}
 
 \begin{frame}{PIF Theory}
@@ -305,39 +314,46 @@ If we let $m\rightarrow \infty$, the effect of the initial prior distribution di
 \begin{frame}{Proof sketch and discussion}
   Conditions:
   \begin{itemize}
-    \item On parameter space $\Theta$: Compact, corners not too "sharp" \citep[regular compact set, Def~1 of][]{chen24}.
+    \item On parameter space $\Theta$: Compact, corners not too ``sharp" \citep[regular compact set, Def~1 of][]{chen24}.
     \item Regularity conditions on the model (positive and finite likelihood, densities are smooth functions of $\theta$). 
     \item Conditions on the parameter perturbations (type of perturbations, and cooling schedule). 
   \end{itemize}
   Proof Sketch: 
   \begin{itemize}
-    \item \citet{chen24} provides framework for convergence of IF of POMP models; we write a general PanelPOMP as a POMP model, and PIF is a special case of IF for these models. 
+    \item \citet{chen24} provides theory for convergence of IF of POMP models; we write a general PanelPOMP as a POMP model, and PIF is a special case of IF for these models. 
   \end{itemize}
 \end{frame}
 
-\begin{frame}{PIF: a tradeoff}
-  Iterated filtering takes data one observation at a time. 
-  In the panel setting, this means we process by unit $u$. 
-  Ignoring perturbations, the algorithm iterates over $(m, u)$: 
+\begin{frame}{Iterated Filtering for panel models: a tradeoff}
+  Iterated filtering is done one observation at a time. 
+  In the panel setting, this means we also process one unit $u$ at a time.
+  
+  Ignoring perturbations, we have do \emph{unit} data cloning, iterating over $(m, u)$: 
   \begin{align}
-    \pi_{m, u}(\theta) &\propto \mathcal{L}_u(\paramVec; y_u^*)\, \pi_{m, u-1}(\theta) = \mathcal{L}_u(\phi, \psi_u; y_u^*)\, \pi_{m, u-1}(\theta), \label{eq:PIFupdate}
+    \pi_{m, u}(\theta) &\propto \mathcal{L}(\paramVec; y_u^*)\, \pi_{m, u-1}(\theta) = \mathcal{L}_u(\phi, \psi_u; y_u^*)\, \pi_{m, u-1}(\theta), \label{eq:PIFupdate}
   \end{align}
-    Using $\pi_{0, 0}(\theta)$ as the initial prior distribution. Even if prior is independent, we get dependence by iterating Eq.~\ref{eq:PIFupdate} over $u$. Two options of iterated filtering: 
+    Using $\pi_{0, 0}(\theta)$ as the initial prior distribution. Parameter dependence in posteriors introduced by iterating Eq.~\ref{eq:PIFupdate} over $u$.
+    
+    Two options of iterated filtering: 
     \begin{itemize}
-      \item Perturb all parameters at each time step (high loss of information). 
-      \item When using data from unit $u$, only perturb $\phi$ and $\psi_u$ (the PIF algorithm, high particle depletion). 
+      \item Perturb all parameters at each time step (IF2, high loss of information). 
+      \item When using data from unit $u$, only perturb $\phi$ and $\psi_u$ (PIF, high particle depletion). 
     \end{itemize}
 \end{frame}
 
 \begin{frame}{MPIF motivation}
-  If the last prior $\pi_{m, u-1}(\theta)$ has independence: $\pi_{m, u-1}(\theta) = f(\psi_{-u})g(\phi, \psi_{u})$, then there is no need to resample particles $\psi_{-u}$. This would avoid the particle depletion \emph{and} loss-of-information.
+\setbeamercovered{transparent}
+  If the previous prior $\pi_{m, u-1}(\theta)$ has parameter independence: $\pi_{m, u-1}(\theta) = f(\psi_{-u})g(\phi, \psi_{u})$, then there is no need to resample particles $\psi_{-u}$. 
   
-  This leads to marginalized data cloning (repeating Eqs.~\ref{eq:margBayes}--\ref{eq:MPIFupdate}). 
+  This would avoid the particle depletion \emph{and} loss-of-information, and motivates marginalized data cloning (repeating Eqs.~\ref{eq:margBayes}--\ref{eq:MPIFupdate}).
   
   \begin{align}
 \tilde{\pi}_{m, u}(\theta) &\propto \mathcal{L}_{u}(y^*_u;\, \phi, \psi_u)\, \pi_{m, u-1}(\theta) \label{eq:margBayes}\\
 \pi_{m, u}(\theta) &\propto \int \! \tilde{\pi}_{m, u}(\theta) \, d\phi \, d\psi_u \, \times \int \! \tilde{\pi}_{m, u}(\theta) \, d\psi_{-u} \label{eq:MPIFupdate}.
-\end{align}
+\end{align}\pause
+
+Marginalization can happen in various ways. Next slide is a figure with bivariate Gaussian densities, marginalized over all parameters. 
+
 \end{frame}
 
 \begin{frame}{Marginalized Bayes: Guassian figure}
@@ -485,12 +501,15 @@ ggplot(df_all_mu) +
 
 \begin{frame}{MPIF theory}
 
+  Just as Iterated Filtering extends data cloning (perturbations + particle approximation), the MPIF algorithm extends marginalized data cloning. 
+
   \begin{itemize}
-    \item Like IF extends data cloning, the MPIF algorithm extends this marginalized data cloning.
-    \item Existing theory for IF algorithms cannot readily be extended to MPIF, because of the non-linearity introduced by the marginalization step. 
+    \item Existing theory for IF algorithms rely heavily on the data cloning principle \cite{ionides15, chen24}.
+    \item The non-linearity introduced by the marginalization step invalidates these approaches.
+    % \item Existing theory for IF algorithms cannot readily be extended to MPIF, because of the non-linearity introduced by the marginalization step. 
     \item A natural first question is whether or not marginalized data cloning converges.
     \begin{itemize}
-      \item Unfortunately, a few toy examples suggests not always.
+      \item Unfortunately, a few toy examples suggests not always (computationally and analytically).
     \end{itemize}
   \end{itemize}
   
@@ -498,6 +517,7 @@ ggplot(df_all_mu) +
 
 \begin{frame}{Marginalized data cloning: Gaussian likelihoods}
   Convergence is explored via Gaussian likelihoods.
+  
   The properties of this special case is relevant to the broader class of models that is well approximated by Gaussian models, (e.g., local asymptotic normality \citep{lecam00}).
   
   \begin{theorem}[Chapter 4, Theorem 2]
@@ -525,7 +545,7 @@ ggplot(df_all_mu) +
   \end{theorem}
   
   \begin{itemize}
-    \item This corollary is motivated by heuristic: a more dispersed prior typically results in a posterior distribution that more closely resembles the likelihood function.
+    \item Useful heuristic: a more dispersed prior typically results in a posterior distribution that more closely resembles the likelihood function.
     \item Adding Gaussian noise at each step results in larger updates towards to MLE at each step.
     \item Heuristically, convergence of unperturbed case implies convergence of perturbed case, if perturbation variance decreases to zero.
   \end{itemize}
@@ -540,6 +560,8 @@ ggplot(df_all_mu) +
     \item Theorem~2 (Chapter 4) gives formal conditions where the bias at each step is small enough that the combined iterations still converge to the MLE (no bias).
     \item The advantage of MPIF, however, is improved particle representations. In this case, MPIF may still be preferable even if there is bias in final estimate.
   \end{itemize}
+  
+  Thus, we can think of MPIF as improving a bias-variance tradeoff.
   
 \end{frame}
 

@@ -33,28 +33,32 @@ There are several terms that have been used as synonyms with state space models 
   \item Partially observed Markov process (POMP) model
 \end{itemize}
 
-I chose SSM as it is the terminology that potential collaborators are most familiar with.
+I will begin by defining how these terms are used in my thesis.
+
 \end{frame}
 
 \begin{frame}{State Space Models (SSM)}
-  I Follow the definition used by \citet{durbin12} for a SSM.
+  I follow the definition used by \citet{durbin12} for a SSM.
   
   \begin{itemize}
-  \item Let $\bm{Y}_{1}, \bm{Y}_2, \ldots, \bm{Y}_{N}$ be random variable representing the observed time series. These observations occur at time points $t_1, \ldots, t_N$, and can be vector valued. 
-  \item A SSM introduces unobservable (latent) states $\bm{X}_1, \ldots, \bm{X}_N$ at the same observation times. These latent variables are connected to the observations, in a way defined by the model.
+  \item $\bm{Y}_{1}, \bm{Y}_2, \ldots, \bm{Y}_{N}$ are observed time series. 
+  Observations occur at time points $t_1, \ldots, t_N$, and can be vector valued. 
+  \item A SSM introduces unobservable (latent) states $\bm{X}_1, \ldots, \bm{X}_N$ at the same observation times.
+  These latent variables are connected to the observations, in a way defined by the model.
+  \item We often include an initial value for the latent states, $\bm{X}_0$.
   \end{itemize}
   
-  I will adopt the shorthand $t_{\seq{1}{N}} = (t_1, \ldots, t_N)$, $\bm{Y}_{\seq{1}{N}} = (\bm{Y}_{1}, \ldots, \bm{Y}_{N})$, and $\bm{X}_{\seq{1}{N}} = (\bm{X}_1, \ldots, \bm{X}_N)$.
-  
-  When defining a SSM, we often want to include an initial value for the latent states, $\bm{X}_0$.
+  I will adopt the shorthand $t_{\seq{1}{N}} = (t_1, \ldots, t_N)$, $\bm{Y}_{\seq{1}{N}} = (\bm{Y}_{1}, \ldots, \bm{Y}_{N})$, and $\bm{X}_{\seq{0}{N}} = (\bm{X}_0, \ldots, \bm{X}_N)$.
 
 \end{frame}
 
 \begin{frame}{Likelihood function}
 
-  We assume that the random variables $\bm{Y}_{\seq{1}{N}}$, $\bm{X}_{\seq{0}{N}}$ have a joint probability density $f_{\bm{X}_{\seq{0}{N}}, \bm{Y}_{\seq{1}{N}}}(\bm{x}_{\seq{0}{N}}, \bm{y}_{\seq{1}{N}}; \, \paramVec)$ with respect to some dominating measure (typically Lebesgue or a counting measure), where $\paramVec$ is a parameter vector $\paramVec \in \R^{d_\paramVec}$ that indexes the model.
+  We assume that the random variables $\bm{Y}_{\seq{1}{N}}$, $\bm{X}_{\seq{0}{N}}$ have a joint probability density $f_{\bm{X}_{\seq{0}{N}}, \bm{Y}_{\seq{1}{N}}}(\bm{x}_{\seq{0}{N}}, \bm{y}_{\seq{1}{N}}; \, \paramVec)$ with respect to some dominating measure (Lebesgue or counting).
   
-  The difficulty in likelihood-based inference for these models is a result of only $\bm{Y}_{\seq{1}{N}}$ being observable, and thus the likelihood function involves a high-dimensional integral: 
+  $\paramVec$ is a parameter vector $\paramVec \in \R^{d_\paramVec}$ that indexes the model (unknown).
+  
+  Because only $\bm{Y}_{\seq{1}{N}}$ is observable, the likelihood function involves a high-dimensional integral: 
   
 \begin{eqnarray}
   \label{eq:likedef}
@@ -81,7 +85,18 @@ With these assumptions, we can express the joint density as
 \label{eq:jointLik}
 f_{\bm{X}_{0:N}, \bm{Y}_{1:N}}\big(\bm{x}_{0:N}, \bm{y}_{1:N};\, \paramVec\big) = f_{\bm{X}_0}\big(\bm{x}_0;\, \paramVec\big)\prod_{n = 1}^N f_{\bm{X}_n|\bm{X}_{n-1}}\big(\bm{x}_{n}|\bm{x}_{n-1}; \, \paramVec\big)f_{\bm{Y}_n|\bm{X}_{n}}\big(\bm{y}_n|\bm{x}_{n}; \, \paramVec\big).
 \end{eqnarray}
+\end{frame}
 
+\begin{frame}{POMP pieces}
+  $$
+  f_{\bm{X}_0}\big(\bm{x}_0;\, \paramVec\big)\prod_{n = 1}^N f_{\bm{X}_n|\bm{X}_{n-1}}\big(\bm{x}_{n}|\bm{x}_{n-1}; \, \paramVec\big)f_{\bm{Y}_n|\bm{X}_{n}}\big(\bm{y}_n|\bm{x}_{n}; \, \paramVec\big)
+  $$
+  \begin{itemize}
+    \item The initialize density (or initializer): $f_{\bm{X}_0}\big(\bm{x}_0;\, \paramVec\big)$.
+    \item The transition density (or process model): $f_{\bm{X}_n|\bm{X}_{n-1}}\big(\bm{x}_{n}|\bm{x}_{n-1}; \, \paramVec\big)$. 
+    \item The measurement density (or model): $f_{\bm{Y}_n|\bm{X}_{n}}\big(\bm{y}_n|\bm{x}_{n}; \, \paramVec\big)$.
+  \end{itemize}
+  The latent states can be defined as a continuous time process with values in-between measurement times. 
 \end{frame}
 
 \begin{frame}
@@ -158,29 +173,32 @@ Each of the SSMs considered in this thesis are POMP models.
 \begin{frame}{Other synonyms and definitions}
   Other common terms that are sometimes used as synonyms are used for special cases 
   \begin{block}{Mechanistic Model}
-    A SSM (or POMP) where the evolution of latent variables is dictated by equations mimicing real-world mechanisms. 
+    A SSM (or POMP) where the evolution of latent variables is dictated by equations that mimic real-world mechanisms. 
   \end{block}
   
   \begin{block}{Hidden Markov Model (HMM)}
     A SSM (or POMP) where the latent variables take values in a discrete and finite space.
   \end{block}
-  
+
+I chose SSM for the title as it is the terminology that potential collaborators are most familiar with.
+
 \end{frame}
 
 \begin{frame}{Remaining Chapters and Outline}
   \begin{itemize}
-    \item Inference for ARMA models.
+    \item \alert{Chapter~2:} Inference for ARMA models.
       \begin{itemize}
-        \item ARMA models are a special type of linear Gaussian SSMs, and are an important part of modern science. 
+        \item ARMA models are a special type of linear Gaussian SSMs, and are an important part of modern science (In review). 
       \end{itemize}
-    \item Mechanistic models for modeling cholera outbreak in Haiti.
+    \item \alert{Chapter~3:} Mechanistic models for modeling cholera \citep{wheeler24}.
       \begin{itemize}
-        \item This case study discusses the strengths and weaknesses of using mechanistic models to inform government policy, using a retrospective analysis of the 2010-2019 cholera oubreak in Haiti.
+        \item This case study discusses the strengths and weaknesses of using mechanistic models to inform government policy, using a retrospective analysis of the 2010-2019 cholera outbreak in Haiti.
       \end{itemize}
-    \item The marginalized panel iterated filter (MPIF) algorithm.
+    \item \alert{Chapter~4:} The marginalized panel iterated filter (MPIF) algorithm.
     \begin{itemize}
-      \item This chapter proposes a new inference algorithm for a large collection of related POMP models, called a PanelPOMP. Some novel theory for existing algorithms for these models is also presented.
+      \item A new inference algorithm is proposed for a large collections of related POMP models, called PanelPOMPs, and theory for existing algorithms for these models is also presented.
     \end{itemize}
+    \item \alert{Chapter~5:} Summary and future directions.
   \end{itemize}
 \end{frame}
 

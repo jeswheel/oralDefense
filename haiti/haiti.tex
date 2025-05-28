@@ -104,15 +104,16 @@
 \end{frame}
 
 \begin{frame}{Proposing interventions}
+\setbeamercovered{transparent}
 % At the time, there was interest in whether or not vaccinations would be a viable approach to eradicate cholera from Haiti.
 
-A group of top researchers built three mechanistic models to estimate the potential impacts of various vaccination strategies \citep{lee20}.
+A group of researchers built three mechanistic models to estimate the potential impacts of various vaccination strategies \citep{lee20}.
 
 \begin{itemize}
-  \item The distinct teams each concluded predicted cholera resurgence from Feb 2019 - Feb 2024. 
+  \item Distinct groups each predicted large cholera incidence from Feb 2019--Feb 2024. 
   \item There were no confirmed cases from Feb 2019 - Sep 2022 \citep{trevisin22}. 
   \item Though there were some cases recently recorded, not near the predicted scale \citep{PAHO23}.
-\end{itemize}
+\end{itemize}\pause
 
 \alert{Questions:} What are strengths and weaknesses of mechanistic models? What are common mistakes researchers make? How can we improve outcomes in the future?
 
@@ -250,7 +251,7 @@ A group of top researchers built three mechanistic models to estimate the potent
   }  
          \end{tabular}
            & \begin{tabular}{l}
-             \parbox{0.38\linewidth}{%  change the parbox width as appropiate
+             \parbox{0.4\linewidth}{%  change the parbox width as appropiate
              \begin{itemize}
               \item Spatial Dependence between units.
               \item Stochastic transmission rates.
@@ -266,7 +267,12 @@ A group of top researchers built three mechanistic models to estimate the potent
 \end{frame}
 
 \begin{frame}{Model Fitting}
-The iterated block particle filter (IBPF) was used to fit the model \citep{ionides24}.
+
+In total, there are $34$ parameters that need to be estimated.
+
+This same model was used by \citet[Group~3 of][]{lee20}, who fit using an independence approximation, but used interacting model for forecasts.
+
+We used the the iterated block particle filter (IBPF) to fit the model \citep{ionides24}, which wasn't available during the original study.
 
 \begin{table}[ht]
 \centering
@@ -279,7 +285,7 @@ Log-likelihood & \cellcolor{green!20}-17332.9 & \cellcolor{red!20}-33832.6 & -17
 AIC & \cellcolor{green!20}34733.9 & \cellcolor{red!20}67723.2 & 35945.0 \\
 \hline
 \end{tabular}
-\caption{Comparison of our fitted model to original parameters used to inform vaccination policy.}
+\caption{Comparison of our fitted model to original parameters used to inform vaccination policy, compared to $\log-\mathrm{ARMA}(2, 1)$ benchmark.}
 \label{tab:fit_comparison}
 \end{table}
 
@@ -287,6 +293,7 @@ AIC & \cellcolor{green!20}34733.9 & \cellcolor{red!20}67723.2 & 35945.0 \\
 
 \begin{frame}{Key findings}
 
+Key findings of this study include: 
 \begin{itemize}
   \item Confirmed importance of rainfall and reduced transmission over time.
   \item Importance of proper model diagnostics.

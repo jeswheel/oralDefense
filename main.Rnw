@@ -1,6 +1,7 @@
 % !TeX program = LuaLaTeX
 \documentclass[aspectratio=169, 10pt]{beamer}
 \usetheme{gotham}
+% \input{header}
 
 	\gothamset{
 		numbering=totalframenumber,
@@ -12,6 +13,7 @@
 		parttocframe default=off,
 		sectiontocframe default=off,
 		subsectiontocframe default=off,
+		title page=gotham normal,
 	}
 
 	\usepackage{standalone}
@@ -57,10 +59,13 @@ bg=block title.bg!20!white
 
 \title[]{Innovations in Likelihood-Based Inference for State Space Models}
 \subtitle{Oral Defense}
-\date[]{\today}
-\author[Wheeler]{Jesse Wheeler}
+\date[May 2025]{\today}
+\author[Wheeler, J.]{Jesse Wheeler}
 \institute{Department of Statistics, University of Michigan}
-\titlegraphic{\hfill\includegraphics[height=1.5cm]{michiganM.png}}
+% \titlegraphic{\hfill\includegraphics[height=1.5cm]{michiganM.png}}
+\renewcommand{\gothamtitlepagelogo}{%
+  \hfill\includegraphics[height=1.5cm]{michiganM.png}\hspace{-1.4cm}
+}
 \renewcommand{\gothamInstituteLogoSquare}[1][3ex]{%
 		\includegraphics[height=#1]{michiganM.png}
 }

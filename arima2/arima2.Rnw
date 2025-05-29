@@ -65,7 +65,7 @@ Q = \begin{pmatrix}
 \end{pmatrix} \in \R^r
   \end{equation*}
 
-We can then recover the $\mathrm{ARMA}$ model using the following state space formulation:
+The $\mathrm{ARMA}$ model is equivalent to the following SSM:
 \begin{align*}
   X_n &= TX_{n - 1} + Qw_n \\
   Y_n &= \begin{pmatrix} 1 & 0 & \ldots & 0\end{pmatrix} X_n
@@ -76,15 +76,15 @@ This results in a linear-Gaussian SSM, and the likelihood function $\mathcal{L}(
   \item The likelihood can be maximized by combining this with a numeric optimizer \citep{gardner1980}.
 \end{itemize}
 
-This approach has been the standard method for fitting ARIMA models since the early 2000's \citep{ripley2002}. 
+This is the standard approach ARIMA models since the early 2000's \citep{ripley2002}. 
 
 \end{frame}
 
 \begin{frame}{Optimization Shortcomings}
 \setbeamercovered{transparent}
-This existing approach frequently results in sub-optimal parameter estimates. Simple example in \code{R}: 
+Existing approach frequently results in sub-optimal parameter estimates. Simple example in \code{R}: 
 \begin{itemize}
-  \item Generate data from an $\mathrm{ARMA}(2, 2)$ model.
+  \item Generate data from an $\mathrm{ARMA}(2, 2)$ model (fixed seed).
   \item Fit both $\mathrm{ARMA}(2, 1)$ and $\mathrm{ARMA}(2, 2)$ models to simulated data.
 \end{itemize}
 The $\mathrm{ARMA}(2, 1)$ is a special case of an $\mathrm{ARMA}(2, 2)$ model, with $\MApar_2 = 0$. \pause
@@ -107,8 +107,8 @@ y <- 13 + arima.sim(
 \begin{frame}{Fitting ARMA models}
 \setbeamercovered{transparent}
 
-The \citet{gardner1980} is the standard method for fitting $\mathrm{ARMA}$ parameters. 
-It is implemented in the base statistics libraries in \code{R} and \code{Python}.
+% The \citet{gardner1980} is the standard method for fitting $\mathrm{ARMA}$ parameters. 
+Using \code{R} (same algorithm is in \code{Python}):
 
 % Now we fit both both classes of models: $\mathrm{ARMA}(2, 1)$ and $\mathrm{ARMA}(2, 2)$: 
 <<fitARMA, echo=TRUE>>=
@@ -118,11 +118,13 @@ mod2 <- stats::arima(y, order = c(2, 0, 2))
 @
 
 \pause 
-The likelihood of \code{mod1}, \code{mod2} is \Sexpr{round(mod1$loglik, 1)} and \Sexpr{round(mod2$loglik, 1)}, respectively. The \alert{smaller} model has log-likelihood \Sexpr{round(mod1$loglik - mod2$loglik, 1)} units \alert{higher} than the larger model, which is impossible under proper optimization (could estimate $\hat{\MApar}_2 = 0$).
+The likelihood of \code{mod1}, \code{mod2} is \Sexpr{round(mod1$loglik, 1)} and \Sexpr{round(mod2$loglik, 1)}, respectively. The \alert{smaller} model has log-likelihood \Sexpr{round(mod1$loglik - mod2$loglik, 1)} units \alert{higher} than the larger model.
+
+This is impossible under proper optimization (could estimate $\hat{\MApar}_2 = 0$).
 \end{frame}
 
 \begin{frame}{Convergence to local optima}
-  Why? Likelihood surface is often multimodal, and existing procedures run the risk of converging to a local solution \citep{ripley2002}. Example $\mathrm{MA}(1)$ profiles:
+  Why? The likelihood surface is often multimodal \citep{ripley2002}. Example $\mathrm{MA}(1)$ profiles:
 
 <<MultiModeSetup, echo=FALSE>>=
 sample_data <- function(data, job, n, P, Q, ...) {
@@ -303,17 +305,13 @@ for (j in 1:length(job_ids)) {
 }
 @
   
-
-\begin{figure}[ht]
-<<mutliMode-fig, fig.height=2.8, fig.width=6, echo=FALSE, out.width='0.9\\maxwidth'>>=
+<<mutliMode-fig, fig.height=2.8, fig.width=6, echo=FALSE, out.width='0.9\\maxwidth', fig.align='center'>>=
 ggpubr::ggarrange(
   plotlist = ggs,
   legend = 'right',
   common.legend = TRUE
 )
 @
-\caption{\label{fig:multiMode}The profile log-likelihood of data simulated from four distinct MA(1) models. The dashed, red line indicates the true value of $\MApar_1$; the short-dashed blue line is the CSS-initialization. The solid black line correspond to the estimate $\hat{\MApar}_1$ using \code{stats:arima}.}
-\end{figure}
 
 \end{frame}
 
@@ -333,14 +331,14 @@ ggpubr::ggarrange(
   The roots of the polynomials $\Phi(x) = 1 - \phi_1 x - \phi_2x^2 - \ldots - \phi_px^p$ and $\Psi(x) = 1 + \MApar_1 x + \MApar_2x^2 + \ldots + \MApar_qx^q$ must lie outside the complex unit circle.
 \end{frame}
 
-\begin{frame}
+\begin{frame}{Initialization Algorithm}
   For parameters to be real, the roots need to be real or conjugate pairs. 
   
   We cannot sample all roots as conjugate pairs (or real), as all parameter initializations would have same sign.
   
-  Our approach for each root:
+  Our approach for sampling roots:
   \begin{itemize}
-    \item Sample inverted-root magnitudes uniformly $U(\gamma, 1-\gamma)$.
+    \item Sample magnitude of inverted-root uniformly $U(\gamma, 1-\gamma), \, \gamma \approx 0$.
     \item With probability $p = \sqrt{1/2}$, sample inverted-root pairs as real.
     \begin{itemize}
       \item If real, assign the same sign with probability $p$.

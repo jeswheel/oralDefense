@@ -223,7 +223,7 @@ GG_PMDC <- function(Lambda, Prior, M, init_noise = 1/4) {
 \section{The Marginalized Panel Iterated Filter (MPIF)}
 
 \begin{frame}{Motivation}
-Often we have a collection of related time series called, called \emph{panel data}.
+Collection of related time series are called \emph{panel data}.
 We want to make inference using the entire collection, not just on each time series.
 
 Examples:
@@ -239,7 +239,7 @@ Examples:
 \end{frame}
 
 \begin{frame}{Panel models}
-  Measurements for unit $u$ taken at times $t_{u, 1:N_u}$. Observed and latent process at these times denoted $Y_{u, n}$ and $X_{u, n}$, respectively.
+  Measurements taken at $u \in 1:U$ units. Times are $t_{u, 1:N_u}$. Observed and latent process at these times denoted $Y_{u, n}$ and $X_{u, n}$, respectively.
   
   Each unit $u$ defines an independent POMP model, the entire collection of models is a PanelPOMP.
   
@@ -259,9 +259,9 @@ Examples:
   \begin{itemize}
     \item Each model may share features (or parameters), and we want to estimate using all of the data. 
   \end{itemize}
-  Common inference procedures in low dimensions rely on particle filters \citep{arulampalam02}.
+  Common inference procedures for single units rely on particle filters \citep{arulampalam02}.
   \begin{itemize}
-    \item[{\color{green} $\checkmark$}] Particle filters work in low-dimensions, can be applied independently to units.
+    \item[{\color{green} $\checkmark$}] Particle filters can be applied independently to units.
     \item[{\color{red} $X$}] Iterated filtering (IF) is an extension used to perform maximum likelihood estimation \citep{ionides15}.
     \begin{itemize}
       \item IF introduces dependence because of shared $\theta$, making it a high-dimensional problem.
@@ -278,7 +278,7 @@ Examples:
 \begin{align*}
 \pi_1(\theta) &\propto \mathcal{L}(\paramVec; \bm{y}^*)\pi_0(\theta), \\
 \pi_2(\theta) &\propto \mathcal{L}(\paramVec; \bm{y}^*)\pi_1(\theta) \propto \mathcal{L}(\paramVec; \bm{y}^*)^2\pi_0(\theta),\\
-&\vdots\\
+&\quad\quad\vdots\\
 \pi_m(\theta) &\propto \mathcal{L}(\paramVec; \bm{y}^*)^m\pi_0(\theta).
 \end{align*}
 If we let $m\rightarrow \infty$, the effect of the initial prior distribution diminishes, and the $m$th posterior has all of its mass centered at the MLE.
@@ -325,7 +325,7 @@ If we let $m\rightarrow \infty$, the effect of the initial prior distribution di
 \end{column}
 
 \begin{column}{0.35\textwidth}
-\vspace{-4cm}
+\vspace{-3.2cm}
 
 \textbf{\underline{Function Inputs:}}
 

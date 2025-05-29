@@ -97,9 +97,8 @@ I will begin by defining how these terms are used in my thesis.
   
   \begin{itemize}
   \item $\bm{Y}_{1}, \bm{Y}_2, \ldots, \bm{Y}_{N}$ are observed time series. 
-  Observations occur at time points $t_1, \ldots, t_N$, and can be vector valued. 
+  Observations occur at time points $t_1, \ldots, t_N$. 
   \item A SSM introduces unobservable (latent) states $\bm{X}_1, \ldots, \bm{X}_N$ at the same observation times.
-  These latent variables are connected to the observations, in a way defined by the model.
   \item We often include an initial value for the latent states, $\bm{X}_0$.
   \end{itemize}
   
@@ -109,7 +108,7 @@ I will begin by defining how these terms are used in my thesis.
 
 \begin{frame}{Likelihood function}
 
-  We assume that the random variables $\bm{Y}_{\seq{1}{N}}$, $\bm{X}_{\seq{0}{N}}$ have a joint probability density $f_{\bm{X}_{\seq{0}{N}}, \bm{Y}_{\seq{1}{N}}}(\bm{x}_{\seq{0}{N}}, \bm{y}_{\seq{1}{N}}; \, \paramVec)$ with respect to some dominating measure (Lebesgue or counting).
+  Assume that $\bm{Y}_{\seq{1}{N}}$, $\bm{X}_{\seq{0}{N}}$ are random variables with a joint probability density $f_{\bm{X}_{\seq{0}{N}}, \bm{Y}_{\seq{1}{N}}}(\bm{x}_{\seq{0}{N}}, \bm{y}_{\seq{1}{N}}; \, \paramVec)$ with respect to some dominating measure (Lebesgue or counting).
   
   $\paramVec$ is a parameter vector $\paramVec \in \R^{d_\paramVec}$ that indexes the model (unknown).
   
@@ -126,7 +125,7 @@ I will begin by defining how these terms are used in my thesis.
 
 A common approach is to treat SSMs as partially observed Markov process (POMP) models. We make the following assumptions: 
 \begin{itemize}
-  \item We assume that the latent variables are a Markov process
+  \item Latent variables are Markovian
   $$
   f_{\bm{X}_{n} | \bm{X}_{1:n-1}}(\bm{x}_{n} | \bm{x}_{1:n-1}; \, \paramVec) = f_{\bm{X}_{n} | \bm{X}_{n-1}}(\bm{x}_{n} | \bm{x}_{n-1}; \, \paramVec).
   $$
@@ -174,7 +173,7 @@ Each of the SSMs considered in this thesis are POMP models.
   \end{block}
   
   \begin{block}{Hidden Markov Model (HMM)}
-    A SSM (or POMP) where the latent variables take values in a discrete and finite space.
+    A SSM (or POMP) where the latent variables $\bm{X}_n$ take values in a discrete and finite space.
   \end{block}
 
 I chose SSM for the title as it is the terminology that potential collaborators are most familiar with.

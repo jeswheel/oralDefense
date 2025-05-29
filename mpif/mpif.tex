@@ -83,7 +83,7 @@ Examples:
     \item Longitudinal studies using within-host dynamic models \citep{ranjeva17}.
   \end{itemize}
   
-  Mechanistic models are routinely fitted to time series data but seldom to panel data, despite its widespread availability.
+  Mechanistic models seldom used for panel data, despite widespread availability.
   
   % This suggests that the practical difficulties for existing procedures. 
 \end{frame}
@@ -139,9 +139,9 @@ If we let $m\rightarrow \infty$, the effect of the initial prior distribution di
 \setbeamercovered{transparent}
   Loosely speaking, iterated filtering is just data cloning with the additional pieces: 
   \begin{enumerate}
-    \item Likelihood cannot be evaluated exactly, it's approximated using particle filters. 
-    \item At each time-step, the parameter particles are perturbed.
-    \item Parameter particles reweighted using conditional log-likelihoods.
+    \item Likelihood is approximated using sequential Monte Carlo. 
+    \item Parameter particles are perturbed over time, treated like states.
+    % \item Parameter particles reweighted using conditional log-likelihoods.
   \end{enumerate}\pause
   {\color{green} $\checkmark$} The perturbation of parameters is necessary to avoid particle depletion, a known problem with particle filters + Bayesian inference \citep{chen24}.
   
@@ -384,13 +384,13 @@ This is log-linear Gaussian, so exact likelihood can be computed \citep{kalman60
 
 \begin{frame}{Discussion}
   \begin{itemize}
-    \item In all tested models, the MPIF algorithm outperforms PIF, especially as the number of units $U$ is large, and number of unit-specific parameters is large.
-    \item Even poor performing replicates of MPIF often outperform PIF, despite having weaker theoretical guarantees.
+    \item In all tested models, the MPIF algorithm outperforms PIF (especially as $U$ and $d_\psi$ grow).
+    \item Even poor performing replicates of MPIF often outperform PIF, despite weaker theoretical guarantees.
     \item Improved performance is a result of reduced particle depletion.
     \item Stronger theory for MPIF is available in some special cases, each covered by Theorem~1 of Chapter~4:
     \begin{itemize}
-      \item No shared parameters: there is no parameter dependence, and the algorithm is equivalent to performing IF2 independently to each model. 
-      \item No unit-specific parameters: the algorithm is the same as PIF, as resampling unit-specific parameters is not needed.
+      \item No shared parameters: equivalent to performing IF2 independently to each model. 
+      \item No unit-specific parameters: MPIF is the same as PIF.
     \end{itemize}
   \end{itemize}
 \end{frame}

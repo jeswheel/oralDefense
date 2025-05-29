@@ -137,12 +137,12 @@ We can then recover the $\mathrm{ARMA}$ model using the following state space fo
   Y_n &= \begin{pmatrix} 1 & 0 & \ldots & 0\end{pmatrix} X_n
 \end{align*}
 
-This results in a linear-Gaussian SSM, and the likelihood function $\mathcal{L}(\paramVec)$ can be evaluated exactly using the Kalman filter \citep{kalman60}.
+This results in a linear-Gaussian SSM, and the likelihood function $\mathcal{L}(\paramVec)$ can be evaluated using the Kalman filter \citep{kalman60}.
 \begin{itemize}
   \item The likelihood can be maximized by combining this with a numeric optimizer \citep{gardner1980}.
 \end{itemize}
 
-This approach has been the standard method for fitting ARIMA models since the early 2000's due to modern computing capabilities \citep{ripley2002}. 
+This approach has been the standard method for fitting ARIMA models since the early 2000's \citep{ripley2002}. 
 
 \end{frame}
 
@@ -153,7 +153,7 @@ This existing approach frequently results in sub-optimal parameter estimates. Si
   \item Generate data from an $\mathrm{ARMA}(2, 2)$ model.
   \item Fit both $\mathrm{ARMA}(2, 1)$ and $\mathrm{ARMA}(2, 2)$ models to simulated data.
 \end{itemize}
-The $\mathrm{ARMA}(2, 1)$ is formally a special case of an $\mathrm{ARMA}(2, 2)$ model, with $\MApar_2 = 0$. \pause
+The $\mathrm{ARMA}(2, 1)$ is a special case of an $\mathrm{ARMA}(2, 2)$ model, with $\MApar_2 = 0$. \pause
 Simulation details: 
 \begin{itemize}
   \item $(\phi_1, \phi_2, \MApar_1, \MApar_2) = (0.2, -0.1, 0.4, 0.2)$.
@@ -168,7 +168,8 @@ Simulation details:
 \begin{frame}{Fitting ARMA models}
 \setbeamercovered{transparent}
 
-The \citet{gardner1980} is the standard method for fitting $\mathrm{ARMA}$ model parameters. It is implemented in the base \code{stats} package in R, as well as the \code{statsmodels} module in Python.
+The \citet{gardner1980} is the standard method for fitting $\mathrm{ARMA}$ parameters. 
+It is implemented in the base statistics libraries in \code{R} and \code{Python}.
 
 % Now we fit both both classes of models: $\mathrm{ARMA}(2, 1)$ and $\mathrm{ARMA}(2, 2)$: 
 \begin{knitrout}
@@ -182,7 +183,7 @@ The \citet{gardner1980} is the standard method for fitting $\mathrm{ARMA}$ model
 \end{knitrout}
 
 \pause 
-The likelihood of \code{mod1} is -141.2, and the likelihood of \code{mod2} is -144.3. The \alert{smaller} model has a log-likelihood that is 3.1 units \alert{higher} than the larger model, which is mathematically impossible under proper optimization (could estimate $\hat{\MApar}_2 = 0$).
+The likelihood of \code{mod1}, \code{mod2} is -141.2 and -144.3, respectively. The \alert{smaller} model has log-likelihood 3.1 units \alert{higher} than the larger model, which is impossible under proper optimization (could estimate $\hat{\MApar}_2 = 0$).
 \end{frame}
 
 \begin{frame}{Convergence to local optima}
@@ -207,10 +208,10 @@ The likelihood of \code{mod1} is -141.2, and the likelihood of \code{mod2} is -1
   
   However, I have seen \alert{no instances} of this for $\mathrm{ARIMA}$ models. There are a few challenges: 
   \begin{itemize}
-    \item Most users don't know about the possibility of converging to local solutions. 
+    \item Most users don't know about the possibility. 
     \item Their are complex constraints on parameter initializations. 
     \begin{itemize}
-      \item Constraints are on the roots of polynomials formed by model parameters, not directly on parameters themselves; transformations not readily available.
+      \item Constraints are on the roots of polynomials formed by parameters, not parameters themselves; transformations not readily available.
     \end{itemize}
   \end{itemize}
   \pause
@@ -218,11 +219,11 @@ The likelihood of \code{mod1} is -141.2, and the likelihood of \code{mod2} is -1
 \end{frame}
 
 \begin{frame}
-  For parameters to be real, the roots need to be sampled as real or conjugate pairs. 
+  For parameters to be real, the roots need to be real or conjugate pairs. 
   
-  We cannot sample all roots as conjugate pairs (or real), as this would result in specific parameters being all one sign. 
+  We cannot sample all roots as conjugate pairs (or real), as all parameter initializations would have same sign.
   
-  Our approach for each root is the following:
+  Our approach for each root:
   \begin{itemize}
     \item Sample inverted-root magnitudes uniformly $U(\gamma, 1-\gamma)$.
     \item With probability $p = \sqrt{1/2}$, sample inverted-root pairs as real.

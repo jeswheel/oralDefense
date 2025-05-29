@@ -58,6 +58,7 @@
 		\UseTblrLibrary{booktabs} % to load extra commands from booktabs
 	\usepackage{changepage}
 	\usepackage{minted}
+	\usepackage[ruled,noline,linesnumbered]{algorithm2e}
 		\definecolor{codeback}{rgb}{0.90,0.91,0.92}
 		\definecolor{codebackdark}{rgb}{0.10,0.11,0.12}
 
@@ -147,6 +148,56 @@ If we let $m\rightarrow \infty$, the effect of the initial prior distribution di
   {\color{red} $X$} The perturbations introduce a loss of information \citep{liu01}, so are decreased over the cloning iteration.
 \end{frame}
 
+\begin{frame}[plain, t]{Iterated Filtering for Panel Models}
+\begin{columns}[t]
+\begin{column}{0.69\textwidth}
+  \begin{algorithm}[H]
+  \notsotiny
+\For{$m \in 1:M$}{
+  Set $\Theta_{0, j}^{F, m} = \Theta_{j}^{m-1} = (\Phi_j^{m-1}, \Psi_{1:U, j}^{m-1})$ for $j \in \seq{1}{J}$\;
+    \For{$u \in \seq{1}{U}$}{
+        Set $\Theta_{u, 0, j}^{F, m} = (\Phi_{u, 0, j}^{F, m}, \Psi_{1:U, 0, j}^{F, m}) \sim h_{u, 0}\big(\cdot | \Theta^{F, m}_{u-1, j}; \sigma_{u, m}\big)$ \label{line:startu}\; 
+      Initialize $X_{u, 0, j}^{F, m} \sim f_{X_{u, 0}}(x_{u, 0}; \Phi_{u, 0, j}^{F, m}, \Psi_{u, 0, j}^{F, m})$ for $j \in \seq{1}{J}$\;
+        \For{$n \in \seq{1}{N_u}$} {
+          Set $\Theta_{u, n, j}^{P, m} = (\Phi_{u, n, j}^{P, m}, \Psi^{P, m}_{1:U, n, j}) \sim h_{u, n}\big(\cdot |\Theta_{u, n-1, j}^{F, m}; \sigma_{u, m}\big)$ for $j \in \seq{1}{J}$ \label{line:perturbations}\;
+          $X_{u, n, j}^{P, m} \sim f_{X_{u, n}|X_{u, n-1}}\big(x_{u, n}|X_{u, n-1, j}^{F, m}; \Phi_{u, n, j}^{P, m}, \Psi_{u, n, j}^{P, m}\big)$ for $j \in \seq{1}{J}$ \label{line:Xpred}\;
+          $w_{u, n, j}^m = f_{Y_{u, n}|X_{u, n}}\big(y_{u, n}^*|X_{u, n, j}^{P, m};\Phi_{u, n, j}^{P, m}, \Psi_{u, n, j}^{P, m}\big)$ for $j \in \seq{1}{J}$ \label{line:weights}\;
+          Draw $k_{\seq{1}{j}}$ with $P(k_j = i) = w_{u, n, i}^m / \sum_{v = 1}^J w_{u, n, v}^m$ for $i, j \in \seq{1}{J}$\;
+          Set $X_{u, n, j}^{F, m} = X_{u, n, k_j}^{P, m}$, and $\big(\Phi_{u, n, j}^{F, m}, \Psi_{u, n, j}^{F, m}\big) = \big(\Phi_{u, n, k_j}^{P, m}, \Psi_{u, n, k_j}^{P, m}\big)$ for $j \in \seq{1}{J}$\;
+            \uIf{$\mathrm{MARGINALIZE}$}{$\Psi^{F,m}_{\tilde u,n,j} = \Psi^{P,m}_{\tilde u,n,j}$ for all $\tilde u \neq u$, $j=\seq{1}{J}$\label{mpif:update}} 
+       \Else{$\Psi^{F,m}_{\tilde u,n,j} = \Psi^{P,m}_{\tilde u,n,k_j}$ for all $\tilde u \neq u$, $j=\seq{1}{J}$}
+        }
+      Set $\Theta_{u, j}^{F, m} = \big(\Phi_{u, N_u, j}^{F, m}, \Psi_{u, N_{1:U}, j}^{F, m}\big)$ for $j \in \seq{1}{J}$ \label{line:endu}\;
+    }
+  Set $\Theta_j^{(m)} = \Theta_{U, j}^{F, m}$ for $j \in \seq{1}{J}$\;
+}
+\end{algorithm}
+\end{column}
+
+\begin{column}{0.35\textwidth}
+\vspace{-4cm}
+
+\textbf{\underline{Function Inputs:}}
+
+\vspace{2mm}
+
+  \begin{itemize}
+    \footnotesize
+    \item Initializer: $f_{X_{u, 0}}(x_{u, 0}; \, \theta)$.
+    \item Process Simulator: $f_{X_{u, n}|X_{u, n-1}}(x_{u, n}|x_{u, n-1}; \, \theta)$.
+    \item Measurement Model: $f_{Y_{u, n}|X_{u, n}}(y_{u, n}|x_{u, n} ; \, \theta)$. 
+    \item Data $y_{u, n}^*$. 
+    \item Iterations, Particles: $(M, J)$.
+    \item Starting parameter swarm, $\Theta_j^0 = \big(\Phi_j^0, \Psi_{1:U, j}^0\big)$.
+    \item Perturbation simulator: $h_{u, n}(\cdot | \varphi; \sigma)$.
+    \item Variance sequence: $\sigma_{1:U, 1:M}$.
+  \end{itemize}
+  
+\end{column}
+
+\end{columns}
+\end{frame}
+
 \begin{frame}{PIF Theory}
   The panel iterated filter (PIF) is a type of IF, mitigating information loss \citep{breto20}. 
   It has been successfully used to estimate the MLE previously \citep[e.g.,][]{domeyer22}.
@@ -222,7 +273,7 @@ Marginalization can happen in various ways. Next slide is a figure with bivariat
 
 \begin{frame}{MPIF theory}
 
-  Just as Iterated Filtering extends data cloning (perturbations + particle approximation), the MPIF algorithm extends marginalized data cloning. 
+  Just as IF extends data cloning (perturbations + particle approximation), the MPIF algorithm extends marginalized data cloning. 
 
   \begin{itemize}
     \item Existing theory for IF algorithms rely heavily on the data cloning principle \cite{ionides15, chen24}.
@@ -262,11 +313,11 @@ Marginalization can happen in various ways. Next slide is a figure with bivariat
 \begin{frame}{Convergence with perturbations}
 
     \begin{theorem}[Chapter 4, Corollary 1]
-    Considering the same setup as Theorem~2 (Chapter~4), if parameters are perturbed prior performing the Bayes update at each step using Gaussian additive noise with mean $0$ and covariance $\sigma^2_m\Sigma_0$, then if $\sigma_m^2 = o(1/m)$, then the algorithm still converges to the MLE as $m\rightarrow \infty$. 
+    Consider the same setup as Theorem~2 (Chapter~4). If parameters are perturbed prior performing the Bayes update at each step using Gaussian additive noise with mean $0$ and covariance $\sigma^2_m\Sigma_0$, then if $\sigma_m^2 = o(1/m)$, the algorithm still converges to the MLE as $m\rightarrow \infty$. 
   \end{theorem}
   
   \begin{itemize}
-    \item Useful heuristic: a more dispersed prior typically results in a posterior distribution that more closely resembles the likelihood function.
+    \item Useful heuristic: a more dispersed prior typically results in a posterior distribution closer to the likelihood function.
     \item Adding Gaussian noise at each step results in larger updates towards to MLE at each step.
     \item Heuristically, convergence of unperturbed case implies convergence of perturbed case, if perturbation variance decreases to zero.
   \end{itemize}
@@ -278,8 +329,14 @@ Marginalization can happen in various ways. Next slide is a figure with bivariat
   One perspective is that the marginalization adds a small amount of bias in each intermediate posterior distribution.
   
   \begin{itemize}
-    \item Theorem~2 (Chapter 4) gives formal conditions where the bias at each step is small enough that the combined iterations still converge to the MLE (no bias).
-    \item The advantage of MPIF, however, is improved particle representations. In this case, MPIF may still be preferable even if there is bias in final estimate.
+    \item Theorem~2 (Chapter 4) gives formal conditions where the bias at each step is small, and algorithm converges to MLE (no bias).
+    \item The advantage is improved particle representations. In this case, MPIF may still be preferable even if there is small bias.
+  \end{itemize}
+  
+  Thus, we can think of MPIF as improving a bias-variance tradeoff.
+  
+  \begin{itemize}
+    \item To demonstrate this, perform a single unit-iteration of PIF and MPIF on Gaussian data and model.
   \end{itemize}
   
 \end{frame}

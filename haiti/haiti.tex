@@ -268,11 +268,11 @@ A group of researchers built three mechanistic models to estimate the potential 
 
 \begin{frame}{Model Fitting}
 
-In total, there are $34$ parameters that need to be estimated.
+In total, there are $34$ parameters to estimate.
 
-This same model was used by \citet[Group~3 of][]{lee20}, who fit using an independence approximation, but used interacting model for forecasts.
+Same model used by \citet[Group~3 of][]{lee20}, who fit using an independence approximation.
 
-We used the the iterated block particle filter (IBPF) to fit the model \citep{ionides24}, which wasn't available during the original study.
+We used the the iterated block particle filter (IBPF) to fit the model \citep{ionides24}.
 
 \begin{table}[ht]
 \centering
@@ -285,7 +285,7 @@ Log-likelihood & \cellcolor{green!20}-17332.9 & \cellcolor{red!20}-33832.6 & -17
 AIC & \cellcolor{green!20}34733.9 & \cellcolor{red!20}67723.2 & 35945.0 \\
 \hline
 \end{tabular}
-\caption{Comparison of our fitted model to original parameters used to inform vaccination policy, compared to $\log-\mathrm{ARMA}(2, 1)$ benchmark.}
+\caption{Comparison of our fitted model to original parameters used to inform vaccination policy, compared to $\log\mathrm{ARMA}(2, 1)$ benchmark.}
 \label{tab:fit_comparison}
 \end{table}
 

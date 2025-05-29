@@ -122,8 +122,14 @@ bg=block title.bg!20!white
 % \titlegraphic{\hfill\includegraphics[height=1.5cm]{gotham-logo.pdf}}
 
 \input{header}
+
+\makeatletter
+% \newcommand\notsotiny{\@setfontsize\notsotiny\@vipt\@viipt}
+\newcommand\notsotiny{\@setfontsize\notsotiny{6.6}{7.3}}
+\makeatother
 \IfFileExists{upquote.sty}{\usepackage{upquote}}{}
 \begin{document}
+
 
 \maketitle
 

@@ -26,12 +26,12 @@ root <- ""
 
 \section{Likelihood Maximization for ARMA models}
 
-\begin{frame}{Auto-regressive moving average (ARMA) models}
-  ARMA models are the most frequently used approach to modeling time series data.
+\begin{frame}{Auto-regressive moving average ($\mathrm{ARMA}$) models}
+  $\mathrm{ARMA}$ models are the most frequently used approach to modeling time series data.
   % ARMA models are as foundational to time series analysis as linear models are to regression analysis, and they are often used in conjunction for regression with ARMA errors.
   
   \begin{block}{ARMA model definition}
-    A time series $Y_{1:N}$ is called ARMA$(p, q)$ if it is (weakly) stationary and
+    A time series $Y_{1:N}$ is called $\mathrm{ARMA}(p, q)$ if it is (weakly) stationary and
     \begin{equation}
     Y_n = \phi_1Y_{n - 1} + \cdots + \phi_pY_{n - p} + w_n + \MApar_1w_{n-1} + \ldots + \MApar_qw_{n - q},\label{eq:arma}
     \end{equation}
@@ -42,7 +42,7 @@ root <- ""
 \end{frame}
 
 \begin{frame}[allowframebreaks]{State space formulation}
-  How are they relevant? Inference methodology treats ARMA models as \emph{non-mechanistic} SMMs. Let $r = \max(p, q+1)$, and assume $w_n \overset{\mathrm{iid}}{\sim} N(0, \sigma^2_w)$. Define
+  How are they relevant? Inference methodology treats $\mathrm{ARMA}$ models as \emph{non-mechanistic} SMMs. Let $r = \max(p, q+1)$, and assume $w_n \overset{\mathrm{iid}}{\sim} N(0, \sigma^2_w)$. Define
   \begin{equation*}
     X_n = \begin{pmatrix}
   Y_n \\
@@ -65,7 +65,7 @@ Q = \begin{pmatrix}
 \end{pmatrix} \in \R^r
   \end{equation*}
 
-We can then recover the ARMA model using the following state space formulation:
+We can then recover the $\mathrm{ARMA}$ model using the following state space formulation:
 \begin{align*}
   X_n &= TX_{n - 1} + Qw_n \\
   Y_n &= \begin{pmatrix} 1 & 0 & \ldots & 0\end{pmatrix} X_n
@@ -107,7 +107,7 @@ y <- 13 + arima.sim(
 \begin{frame}{Fitting ARMA models}
 \setbeamercovered{transparent}
 
-The \citet{gardner1980} is the standard method for fitting ARMA model parameters. It is implemented in the base \code{stats} package in R, as well as the \code{statsmodels} module in Python.
+The \citet{gardner1980} is the standard method for fitting $\mathrm{ARMA}$ model parameters. It is implemented in the base \code{stats} package in R, as well as the \code{statsmodels} module in Python.
 
 % Now we fit both both classes of models: $\mathrm{ARMA}(2, 1)$ and $\mathrm{ARMA}(2, 2)$: 
 <<fitARMA, echo=TRUE>>=

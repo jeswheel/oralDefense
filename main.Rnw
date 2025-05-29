@@ -73,7 +73,13 @@ bg=block title.bg!20!white
 
 \input{header}
 
+\makeatletter
+% \newcommand\notsotiny{\@setfontsize\notsotiny\@vipt\@viipt}
+\newcommand\notsotiny{\@setfontsize\notsotiny{6.6}{7.3}}
+\makeatother
+
 \begin{document}
+
 
 \maketitle
 
